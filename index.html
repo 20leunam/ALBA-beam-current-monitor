@@ -103,60 +103,6 @@
     margin-top: 2px;
   }
 
-  .header-badges {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  /* Connection & Wake Lock Badges */
-  .status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 6px 11px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    color: #f8fafc;
-  }
-
-  .status-dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background-color: #94a3b8;
-    flex-shrink: 0;
-  }
-
-  .status-dot.live {
-    background-color: #22c55e;
-  }
-
-  .status-dot.alarm {
-    background-color: #ef4444;
-    animation: pulse-dot 0.8s ease-in-out infinite;
-  }
-
-  .status-dot.alarm-pending {
-    background-color: var(--red-alarm);
-  }
-
-  .status-dot.warning {
-    background-color: var(--amber-warn);
-    animation: pulse-dot 1.2s ease-in-out infinite;
-  }
-
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.25; }
-  }
-
   /* Main Container */
   main {
     width: min(1280px, 100%);
@@ -919,11 +865,6 @@
       align-items: flex-start;
     }
 
-    .header-badges {
-      width: 100%;
-      justify-content: space-between;
-    }
-
     main {
       margin: 12px auto;
       padding: 0 10px 28px;
@@ -1034,12 +975,6 @@
         <div>
           <h1>Machine Current Monitor</h1>
           <div class="subtitle">ALBA Synchrotron · Live Beam Current OCR Readout (msGUI)</div>
-        </div>
-      </div>
-      <div class="header-badges">
-        <div class="status-pill">
-          <span id="live-dot" class="status-dot"></span>
-          <span id="connection-label">Stopped</span>
         </div>
       </div>
     </div>
@@ -1167,7 +1102,7 @@
 
     <!-- Telemetry Status Bar -->
     <section class="telemetry-bar">
-      <div id="status">Ready. Click "Start monitoring" to read the current value.</div>
+      <div id="status">Starting monitoring…</div>
       <div id="last-read">Last successful reading: never</div>
     </section>
 
@@ -1219,8 +1154,6 @@
   const lastEl = document.getElementById('last-read');
   const preview = document.getElementById('preview');
   const emptyPreview = document.getElementById('empty-preview');
-  const liveDot = document.getElementById('live-dot');
-  const connectionLabel = document.getElementById('connection-label');
   const rangeFill = document.getElementById('range-fill');
   const thresholdSlider = document.getElementById('threshold-slider');
   const sliderReadout = document.getElementById('slider-readout');
@@ -1457,7 +1390,6 @@
   function clearAlarmVisuals() {
     lcdBox.classList.remove('alarm-state', 'confirmed', 'pending', 'warning-state');
     rangeFill.classList.remove('low', 'flash', 'warning');
-    liveDot.classList.remove('alarm', 'alarm-pending', 'warning');
     alarmBanner.classList.remove('active');
   }
 
@@ -1467,7 +1399,6 @@
     lcdBox.classList.add('alarm-state');
     rangeFill.classList.remove('flash');
     rangeFill.classList.add('low');
-    liveDot.classList.add('alarm');
     alarmBanner.classList.add('active');
     readingState.textContent = 'Below threshold — silenced';
     readingState.style.color = '#b91c1c';
@@ -1481,7 +1412,6 @@
     // A valid reading clears any "source unavailable" warning.
     sourceWarning = false;
     clearAlarmVisuals();
-    if (!stopped) connectionLabel.textContent = 'Monitoring';
 
     const threshold = getThreshold();
     const enabled = alarmEnabledCheckbox.checked;
@@ -1506,7 +1436,6 @@
         stopAlarmLoop();
         lcdBox.classList.add('alarm-state', 'pending');
         rangeFill.classList.add('low');
-        liveDot.classList.add('alarm-pending');
         readingState.textContent = `Below threshold — confirming ${lowReadingCount}/${required}`;
         readingState.style.color = '#b91c1c';
         readingState.style.fontWeight = '700';
@@ -1524,7 +1453,6 @@
       } else {
         lcdBox.classList.add('alarm-state', 'confirmed');
         rangeFill.classList.add('low', 'flash');
-        liveDot.classList.add('alarm');
         alarmBanner.classList.add('active');
         readingState.textContent = 'Below threshold';
         readingState.style.color = '#b91c1c';
@@ -1555,11 +1483,9 @@
     clearAlarmVisuals();
     lcdBox.classList.add('warning-state');
     rangeFill.classList.add('warning');
-    liveDot.classList.add('warning');
     readingState.textContent = detail;
     readingState.style.color = '#d97706';
     readingState.style.fontWeight = '700';
-    connectionLabel.textContent = 'Source warning';
     setStatus('Reading failed: ' + message, 'warn');
     updateThresholdVisuals();
   }
@@ -1572,7 +1498,6 @@
     readingState.textContent = 'Reading failed — alarm not triggered';
     readingState.style.color = '';
     readingState.style.fontWeight = '700';
-    connectionLabel.textContent = stopped ? 'Stopped' : 'Monitoring';
     setStatus('Reading failed: ' + message, 'normal');
     updateThresholdVisuals();
   }
@@ -1893,9 +1818,7 @@
     stopped = false;
     startButton.disabled = true;
     stopButton.disabled = false;
-    liveDot.classList.add('live');
     clearAlarmVisuals();
-    connectionLabel.textContent = 'Monitoring';
     log('Monitoring started. Refresh interval: 30 seconds.');
     cycle();
     timer = setInterval(cycle, INTERVAL_MS);
@@ -1908,14 +1831,12 @@
     stopAlarmLoop();
     startButton.disabled = false;
     stopButton.disabled = true;
-    liveDot.classList.remove('live');
     clearAlarmVisuals();
     sourceWarning = false;
     lowReadingCount = 0;
     readingState.textContent = 'Waiting for data';
     readingState.style.color = '';
     readingState.style.fontWeight = '';
-    connectionLabel.textContent = 'Stopped';
     setStatus('Monitoring stopped.');
     log('Monitoring stopped.');
   });
@@ -1924,6 +1845,18 @@
     ensureAudioContext();
     cycle(true);
   });
+
+  // Monitoring starts automatically when the page is opened.
+  startButton.click();
+
+  // Browsers may block audio until the first user interaction.
+  const unlockAudio = () => {
+    ensureAudioContext();
+    document.removeEventListener('pointerdown', unlockAudio);
+    document.removeEventListener('keydown', unlockAudio);
+  };
+  document.addEventListener('pointerdown', unlockAudio);
+  document.addEventListener('keydown', unlockAudio);
 })();
 </script>
 </body>

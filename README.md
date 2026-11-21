@@ -4,7 +4,7 @@ A lightweight browser dashboard that polls the ALBA Synchrotron public machine-s
 
 ## Features
 
-- Fetches the public `msGUI.html` status page every 30 seconds and runs OCR on the linked `msGUI.png` image.
+- Starts monitoring automatically when the page opens; the public `msGUI.html` status page is fetched every 30 seconds and OCR runs on the linked `msGUI.png` image.
 - Displays the latest reading in mA with an interactive 0–300 mA gauge. Default alarm threshold: 125 mA.
 - Low-current alarm with an enable switch, threshold control, test button, and silence button.
 - The gear icon opens a closable pop-up for alarm settings: the sound can repeat until silenced or play only two 3-beep cycles.
@@ -19,7 +19,7 @@ https://20leunam.github.io/ALBA-beam-current-monitor/
 
 ## Usage
 
-Open the page and click **Start monitoring**. Keep the tab open — all OCR runs in the browser and there is no backend. The alarm uses the Web Audio API, so the first user interaction is required to enable audio.
+Just open the page: monitoring starts automatically. Keep the tab open — all OCR runs in the browser and there is no backend. Use **Stop** to pause and **Start monitoring** to resume. The alarm uses the Web Audio API, so the first user interaction may be required to enable audio.
 
 Use the gear icon in the **Low-current alarm** panel to change the sound mode and the number of readings required to confirm a drop. Close the pop-up with the × button, **Done**, the Escape key, or by clicking outside it. Use the link at the bottom of the page to suggest changes or report issues.
 
