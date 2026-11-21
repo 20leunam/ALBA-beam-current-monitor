@@ -22,6 +22,8 @@
     --green-bg: #f0fdf4;
     --green-border: #bbf7d0;
     --amber-warn: #d97706;
+    --amber-bg: #fffbeb;
+    --amber-border: #fcd34d;
     --red-alarm: #b91c1c;
     --red-bg: #fef2f2;
     --red-border: #fecaca;
@@ -31,6 +33,10 @@
 
   * {
     box-sizing: border-box;
+  }
+
+  [hidden] {
+    display: none !important;
   }
 
   body {
@@ -135,6 +141,11 @@
   .status-dot.alarm {
     background-color: #ef4444;
     animation: pulse-dot 0.8s ease-in-out infinite;
+  }
+
+  .status-dot.warning {
+    background-color: var(--amber-warn);
+    animation: pulse-dot 1.2s ease-in-out infinite;
   }
 
   @keyframes pulse-dot {
@@ -265,6 +276,11 @@
     border-color: var(--red-alarm);
   }
 
+  .readout-box.warning-state {
+    background-color: var(--amber-bg);
+    border-color: var(--amber-warn);
+  }
+
   .readout-top {
     display: flex;
     justify-content: space-between;
@@ -301,6 +317,10 @@
     color: var(--red-alarm);
   }
 
+  .readout-box.warning-state .value {
+    color: var(--amber-warn);
+  }
+
   .unit {
     font-family: var(--font-mono);
     font-size: 1.35rem;
@@ -310,6 +330,10 @@
 
   .readout-box.alarm-state .unit {
     color: var(--red-alarm);
+  }
+
+  .readout-box.warning-state .unit {
+    color: var(--amber-warn);
   }
 
   /* Interactive Gauge + Threshold Slider */
@@ -356,6 +380,10 @@
 
   .gauge-fill.low {
     background-color: var(--red-alarm);
+  }
+
+  .gauge-fill.warning {
+    background-color: var(--amber-warn);
   }
 
   /* Synchronized Transparent Range Input Overlaid on Gauge */
@@ -468,6 +496,7 @@
     justify-content: space-between;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
     margin-bottom: 12px;
     font-size: 12.5px;
     font-weight: 600;
@@ -484,6 +513,61 @@
     color: var(--green-ok);
     border: 1px solid var(--green-border);
     white-space: nowrap;
+  }
+
+  .settings-toggle {
+    min-height: 34px;
+    padding: 6px 10px;
+    font-size: 12.5px;
+    background-color: var(--bg-subtle);
+    border-color: var(--border-color);
+    color: var(--alba-blue);
+  }
+
+  .settings-toggle[aria-expanded="true"] {
+    background-color: #e8f1f8;
+    border-color: var(--steel-blue);
+    color: var(--steel-blue);
+  }
+
+  .alarm-settings {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-strong);
+    display: grid;
+    gap: 10px;
+  }
+
+  .setting-group {
+    border: 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  .setting-group legend {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    padding: 0 0 4px;
+  }
+
+  .setting-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 30px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--steel-blue);
+    cursor: pointer;
+    flex-shrink: 0;
   }
 
   .alarm-controls {
@@ -691,38 +775,32 @@
     color: var(--text-muted);
   }
 
-  /* Collapsible Diagnostics */
-  details {
+  /* Project Link */
+  .project-link {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 12px 14px;
-    font-size: 13px;
-  }
-
-  summary {
-    cursor: pointer;
-    font-weight: 600;
-    color: var(--alba-blue);
-    user-select: none;
-    min-height: 28px;
     display: flex;
     align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--text-secondary);
   }
 
-  #log {
-    max-height: 180px;
-    overflow: auto;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    background-color: #0f172a;
-    color: #e2e8f0;
-    border-radius: 4px;
-    padding: 12px;
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    line-height: 1.45;
-    margin-top: 10px;
+  .project-link a {
+    color: var(--alba-blue);
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+
+  .project-link a:hover,
+  .project-link a:focus-visible {
+    color: var(--steel-blue);
+    border-bottom-color: var(--steel-blue);
   }
 
   @media (max-width: 720px) {
@@ -776,6 +854,14 @@
 
     #test-sound {
       width: 100%;
+    }
+
+    .settings-toggle {
+      width: 100%;
+    }
+
+    .setting-group label {
+      min-height: 40px;
     }
 
     .action-strip {
@@ -839,7 +925,7 @@
       <article class="card">
         <div class="card-header">
           <span class="card-title">Beam Current</span>
-          <span class="card-meta" id="lcd-alarm-tag">Threshold: 100 mA</span>
+          <span class="card-meta" id="lcd-alarm-tag">Threshold: 125 mA</span>
         </div>
 
         <div class="card-body">
@@ -857,7 +943,7 @@
             <div class="gauge-wrap">
               <div class="gauge-hint">
                 <span>Drag blue marker to set threshold</span>
-                <span id="slider-readout" style="font-family:var(--font-mono);color:var(--steel-blue);font-weight:600;">100 mA</span>
+                <span id="slider-readout" style="font-family:var(--font-mono);color:var(--steel-blue);font-weight:600;">125 mA</span>
               </div>
               <div class="gauge-slider-container">
                 <div class="gauge-track">
@@ -869,7 +955,7 @@
                   min="0"
                   max="300"
                   step="1"
-                  value="100"
+                  value="125"
                   aria-label="Minimum current alarm threshold slider (0 to 300 mA)"
                 >
               </div>
@@ -888,6 +974,7 @@
             <div class="alarm-panel-header">
               <span>Low-current wake-up alarm</span>
               <span id="alarm-status-label" class="alarm-state-badge">Armed</span>
+              <button id="alarm-settings-toggle" class="settings-toggle" type="button" aria-expanded="false" aria-controls="alarm-settings">Alarm settings</button>
             </div>
             <div class="alarm-controls">
               <label class="control-label" for="alarm-enabled">
@@ -898,12 +985,25 @@
               <label class="control-label" for="alarm-threshold">
                 <span>Alert if &lt;</span>
                 <span style="display:inline-flex;align-items:center;gap:6px;">
-                  <input type="number" id="alarm-threshold" min="0" max="300" step="1" value="100" inputmode="decimal">
+                  <input type="number" id="alarm-threshold" min="0" max="300" step="1" value="125" inputmode="decimal">
                   <strong>mA</strong>
                 </span>
               </label>
 
               <button id="test-sound" type="button">Test alarm</button>
+            </div>
+            <div id="alarm-settings" class="alarm-settings" hidden>
+              <fieldset class="setting-group">
+                <legend>Alarm sound</legend>
+                <label><input type="radio" name="alarm-sound-mode" value="continuous" checked> Repeat until silenced</label>
+                <label><input type="radio" name="alarm-sound-mode" value="limited"> Two 3-beep cycles only</label>
+              </fieldset>
+              <fieldset class="setting-group">
+                <legend>Confirm low current after</legend>
+                <label><input type="radio" name="alarm-confirm-readings" value="1" checked> 1 reading (immediate)</label>
+                <label><input type="radio" name="alarm-confirm-readings" value="2"> 2 readings (~60 s)</label>
+                <label><input type="radio" name="alarm-confirm-readings" value="3"> 3 readings (~90 s)</label>
+              </fieldset>
             </div>
           </div>
 
@@ -944,12 +1044,11 @@
       <div id="last-read">Last successful reading: never</div>
     </section>
 
-    <!-- Diagnostics -->
-    <details>
-      <summary>Diagnostics &amp; OCR log</summary>
-      <p style="margin: 8px 0 0; font-size: 12.5px; color: var(--text-secondary);">Reads the public status image using OCR to extract the large <code>CURRENT</code> value (0–300 mA). The value is exposed in <code>#current-mA</code> with its numeric reading in the <code>data-value</code> attribute.</p>
-      <pre id="log"></pre>
-    </details>
+    <!-- Project Link -->
+    <section class="project-link">
+      <span>Have an idea or found a bug?</span>
+      <a href="https://github.com/20leunam/ALBA-beam-current-monitor" target="_blank" rel="noopener noreferrer">Suggest a change on GitHub</a>
+    </section>
   </main>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -959,10 +1058,11 @@
   const INTERVAL_MS = 30000;
   const STORAGE_KEY_THRESHOLD = 'alba_current_alarm_threshold';
   const STORAGE_KEY_ENABLED = 'alba_current_alarm_enabled';
+  const STORAGE_KEY_SOUND_MODE = 'alba_current_alarm_sound_mode';
+  const STORAGE_KEY_CONFIRM_READINGS = 'alba_current_alarm_confirm_readings';
 
   const valueEl = document.getElementById('current-mA');
   const statusEl = document.getElementById('status');
-  const logEl = document.getElementById('log');
   const lastEl = document.getElementById('last-read');
   const preview = document.getElementById('preview');
   const emptyPreview = document.getElementById('empty-preview');
@@ -985,6 +1085,10 @@
   const alarmStatusLabel = document.getElementById('alarm-status-label');
   const lcdBox = document.getElementById('lcd-box');
   const lcdAlarmTag = document.getElementById('lcd-alarm-tag');
+  const settingsToggle = document.getElementById('alarm-settings-toggle');
+  const settingsPanel = document.getElementById('alarm-settings');
+  const soundModeRadios = document.querySelectorAll('input[name="alarm-sound-mode"]');
+  const confirmRadios = document.querySelectorAll('input[name="alarm-confirm-readings"]');
 
   let timer = null, busy = false, worker = null, stopped = true;
   let audioCtx = null;
@@ -993,6 +1097,8 @@
   let isTestRunning = false;
   let alarmMutedForCurrentDrop = false;
   let lastNumericReading = null;
+  let lowReadingCount = 0;
+  let sourceWarning = false;
 
   try {
     const savedThreshold = localStorage.getItem(STORAGE_KEY_THRESHOLD);
@@ -1005,12 +1111,33 @@
     if (savedEnabled !== null) {
       alarmEnabledCheckbox.checked = savedEnabled === 'true';
     }
+    const savedSoundMode = localStorage.getItem(STORAGE_KEY_SOUND_MODE);
+    if (savedSoundMode === 'continuous' || savedSoundMode === 'limited') {
+      const radio = document.querySelector('input[name="alarm-sound-mode"][value="' + savedSoundMode + '"]');
+      if (radio) radio.checked = true;
+    }
+    const savedConfirm = localStorage.getItem(STORAGE_KEY_CONFIRM_READINGS);
+    if (savedConfirm !== null && Number(savedConfirm) >= 1 && Number(savedConfirm) <= 3) {
+      const radio = document.querySelector('input[name="alarm-confirm-readings"][value="' + savedConfirm + '"]');
+      if (radio) radio.checked = true;
+    }
   } catch (e) {}
 
   function getThreshold() {
     const val = Number(alarmThresholdInput.value);
-    if (!Number.isFinite(val)) return 100;
+    if (!Number.isFinite(val)) return 125;
     return Math.max(0, Math.min(300, val));
+  }
+
+  function getSoundMode() {
+    const selected = document.querySelector('input[name="alarm-sound-mode"]:checked');
+    return selected ? selected.value : 'continuous';
+  }
+
+  function getConfirmReadings() {
+    const selected = document.querySelector('input[name="alarm-confirm-readings"]:checked');
+    const count = selected ? Number(selected.value) : 1;
+    return Math.max(1, Math.min(3, Number.isFinite(count) ? count : 1));
   }
 
   function updateThresholdVisuals() {
@@ -1028,6 +1155,16 @@
       alarmStatusLabel.style.backgroundColor = '#f1f5f9';
       alarmStatusLabel.style.color = '#64748b';
       alarmStatusLabel.style.borderColor = '#cbd5e1';
+    } else if (sourceWarning) {
+      alarmStatusLabel.textContent = 'Source warning';
+      alarmStatusLabel.style.backgroundColor = '#fffbeb';
+      alarmStatusLabel.style.color = '#b45309';
+      alarmStatusLabel.style.borderColor = '#fde68a';
+    } else if (lowReadingCount > 0 && lowReadingCount < getConfirmReadings()) {
+      alarmStatusLabel.textContent = 'Confirming ' + lowReadingCount + '/' + getConfirmReadings();
+      alarmStatusLabel.style.backgroundColor = '#fffbeb';
+      alarmStatusLabel.style.color = '#b45309';
+      alarmStatusLabel.style.borderColor = '#fde68a';
     } else if (alarmMutedForCurrentDrop) {
       alarmStatusLabel.textContent = 'Silenced';
       alarmStatusLabel.style.backgroundColor = '#fffbeb';
@@ -1122,6 +1259,20 @@
     alarmLoopTimer = setInterval(() => {
       playAlarmBurst();
     }, 1800);
+    if (testStopTimer !== null) {
+      clearTimeout(testStopTimer);
+      testStopTimer = null;
+    }
+    // A test and the "limited" mode both play exactly two 3-beep cycles.
+    if (isTest || getSoundMode() === 'limited') {
+      testStopTimer = setTimeout(() => {
+        if (!isTestRunning) return;
+        const wasTest = isTestRunning;
+        if (!wasTest) alarmMutedForCurrentDrop = true;
+        stopAlarmLoop();
+        log(wasTest ? 'Alarm sound test completed.' : 'Two alarm cycles completed; sound silenced until current recovers.');
+      }, 3600);
+    }
     updateThresholdVisuals();
   }
 
@@ -1143,15 +1294,57 @@
     updateThresholdVisuals();
   }
 
-  function evaluateAlarm(currentValue, allowSound = true) {
+  function evaluateAlarm(currentValue, allowSound = true, isNewReading = false) {
     updateThresholdVisuals();
     if (currentValue === null || !Number.isFinite(currentValue)) return;
+
+    // A valid reading clears any "source unavailable" warning.
+    sourceWarning = false;
+    lcdBox.classList.remove('warning-state');
+    rangeFill.classList.remove('warning');
+    liveDot.classList.remove('warning');
+    if (!stopped) connectionLabel.textContent = 'Monitoring';
 
     const threshold = getThreshold();
     const enabled = alarmEnabledCheckbox.checked;
     const isLow = enabled && currentValue < threshold;
+    const required = getConfirmReadings();
+
+    if (isLow && !isNewReading && lowReadingCount === 0) {
+      // A setting change made the last reading look low; wait for a fresh reading.
+      stopAlarmLoop();
+      lcdBox.classList.remove('alarm-state', 'warning-state');
+      rangeFill.classList.remove('low', 'warning');
+      liveDot.classList.remove('alarm', 'warning');
+      alarmBanner.classList.remove('active');
+      readingState.textContent = 'Below threshold — awaiting next reading';
+      readingState.style.color = '#d97706';
+      readingState.style.fontWeight = '700';
+      updateThresholdVisuals();
+      return;
+    }
 
     if (isLow) {
+      if (isNewReading) lowReadingCount += 1;
+
+      if (lowReadingCount < required) {
+        // Not confirmed yet: amber warning only, no sound.
+        stopAlarmLoop();
+        lcdBox.classList.remove('alarm-state');
+        rangeFill.classList.remove('low');
+        liveDot.classList.remove('alarm');
+        lcdBox.classList.add('warning-state');
+        rangeFill.classList.add('warning');
+        liveDot.classList.add('warning');
+        alarmBanner.classList.remove('active');
+        readingState.textContent = `Below threshold — confirming ${lowReadingCount}/${required}`;
+        readingState.style.color = '#d97706';
+        readingState.style.fontWeight = '700';
+        setStatus(`Low current ${currentValue} mA — waiting for confirmation (${lowReadingCount}/${required})`, false, true);
+        updateThresholdVisuals();
+        return;
+      }
+
       lcdBox.classList.add('alarm-state');
       rangeFill.classList.add('low');
       liveDot.classList.add('alarm');
@@ -1163,13 +1356,14 @@
 
       if (!alarmMutedForCurrentDrop && allowSound) {
         if (alarmLoopTimer === null) {
-          log(`CONTINUOUS ALARM TRIGGERED: ${currentValue} mA < ${threshold} mA.`);
+          log(`LOW CURRENT ALARM: ${currentValue} mA < ${threshold} mA (confirmed after ${lowReadingCount} reading(s)).`);
         }
         startAlarmLoop(false);
       } else if (alarmMutedForCurrentDrop) {
         stopAlarmLoop();
       }
     } else {
+      lowReadingCount = 0;
       alarmMutedForCurrentDrop = false;
       stopAlarmLoop();
       lcdBox.classList.remove('alarm-state');
@@ -1181,6 +1375,25 @@
       readingState.style.fontWeight = '';
       updateThresholdVisuals();
     }
+  }
+
+  function setSourceWarning(message) {
+    sourceWarning = true;
+    lowReadingCount = 0;
+    stopAlarmLoop();
+    lcdBox.classList.remove('alarm-state');
+    rangeFill.classList.remove('low');
+    liveDot.classList.remove('alarm');
+    lcdBox.classList.add('warning-state');
+    rangeFill.classList.add('warning');
+    liveDot.classList.add('warning');
+    alarmBanner.classList.remove('active');
+    readingState.textContent = 'Source unavailable — alarm not triggered';
+    readingState.style.color = '#d97706';
+    readingState.style.fontWeight = '700';
+    connectionLabel.textContent = 'Source warning';
+    setStatus('Reading failed: ' + message, false, true);
+    updateThresholdVisuals();
   }
 
   function setThresholdValue(newValue) {
@@ -1235,13 +1448,6 @@
     testSoundButton.classList.add('testing');
     startAlarmLoop(true);
     log('Alarm sound test started (two 3-beep cycles).');
-
-    testStopTimer = setTimeout(() => {
-      if (isTestRunning) {
-        stopAlarmLoop();
-        log('Alarm sound test completed.');
-      }
-    }, 3600);
   });
 
   ackAlarmButton.addEventListener('click', () => {
@@ -1250,15 +1456,44 @@
     log('Alarm silenced by operator until current rises above threshold.');
   });
 
+  settingsToggle.addEventListener('click', () => {
+    const willOpen = settingsPanel.hidden;
+    settingsPanel.hidden = !willOpen;
+    settingsToggle.setAttribute('aria-expanded', String(willOpen));
+    settingsToggle.textContent = willOpen ? 'Hide settings' : 'Alarm settings';
+    if (willOpen) ensureAudioContext();
+  });
+
+  soundModeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      try { localStorage.setItem(STORAGE_KEY_SOUND_MODE, getSoundMode()); } catch (e) {}
+      const wasRinging = alarmLoopTimer !== null && !isTestRunning;
+      if (wasRinging) {
+        stopAlarmLoop();
+        if (!alarmMutedForCurrentDrop) startAlarmLoop(false);
+      }
+      log('Alarm sound mode: ' + (getSoundMode() === 'limited' ? 'two 3-beep cycles' : 'repeat until silenced') + '.');
+    });
+  });
+
+  confirmRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      try { localStorage.setItem(STORAGE_KEY_CONFIRM_READINGS, String(getConfirmReadings())); } catch (e) {}
+      log('Low-current confirmation: ' + getConfirmReadings() + ' reading(s).');
+      evaluateAlarm(lastNumericReading, true);
+    });
+  });
+
   updateThresholdVisuals();
 
+  // Diagnostics panel was removed from the UI; messages stay in the browser console.
   function log(message) {
-    logEl.textContent = new Date().toLocaleTimeString() + ' — ' + message + '\n' + logEl.textContent;
+    console.debug(message);
   }
 
-  function setStatus(message, good = false) {
+  function setStatus(message, good = false, warn = false) {
     statusEl.textContent = message;
-    statusEl.style.color = good ? '#15803d' : '#1e293b';
+    statusEl.style.color = good ? '#15803d' : warn ? '#d97706' : '#1e293b';
   }
 
   function cacheBust(url) {
@@ -1410,7 +1645,7 @@
     setStatus('Current detected: ' + display + ' mA · ' + reading.method, true);
     log('Selected current: ' + display + ' mA (' + reading.method + ', OCR confidence ' + Math.round(reading.confidence || 0) + '%).');
 
-    evaluateAlarm(numericVal, true);
+    evaluateAlarm(numericVal, true, true);
   }
 
   async function cycle(force = false) {
@@ -1432,7 +1667,7 @@
       }
       if (!success) throw lastError || new Error('Could not analyze any image.');
     } catch (error) {
-      setStatus('Reading failed: ' + error.message);
+      setSourceWarning(error.message);
       log('ERROR: ' + error.message);
     } finally {
       busy = false;
@@ -1446,6 +1681,9 @@
     startButton.disabled = true;
     stopButton.disabled = false;
     liveDot.classList.add('live');
+    lcdBox.classList.remove('warning-state');
+    rangeFill.classList.remove('warning');
+    liveDot.classList.remove('warning');
     connectionLabel.textContent = 'Monitoring';
     log('Monitoring started. Refresh interval: 30 seconds.');
     cycle();
@@ -1461,6 +1699,15 @@
     stopButton.disabled = true;
     liveDot.classList.remove('live');
     liveDot.classList.remove('alarm');
+    liveDot.classList.remove('warning');
+    lcdBox.classList.remove('warning-state');
+    rangeFill.classList.remove('warning');
+    sourceWarning = false;
+    lowReadingCount = 0;
+    alarmBanner.classList.remove('active');
+    readingState.textContent = 'Waiting for data';
+    readingState.style.color = '';
+    readingState.style.fontWeight = '';
     connectionLabel.textContent = 'Stopped';
     setStatus('Monitoring stopped.');
     log('Monitoring stopped.');

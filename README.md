@@ -1,13 +1,15 @@
 # ALBA Beam Current Monitor
 
-A lightweight browser dashboard that polls the ALBA Synchrotron public machine-status image, extracts the beam current (0–300 mA) with Tesseract.js OCR, and raises a configurable low-current alarm with a live gauge, status preview, and diagnostics log.
+A lightweight browser dashboard that polls the ALBA Synchrotron public machine-status image, extracts the beam current (0–300 mA) with Tesseract.js OCR, and raises a configurable low-current alarm with a live gauge, status preview, and source-failure warning.
 
 ## Features
 
 - Fetches the public `msGUI.html` status page every 30 seconds and runs OCR on the linked `msGUI.png` image.
-- Displays the latest reading in mA with an interactive 0–300 mA gauge.
-- Configurable low-current alarm: threshold, enable/disable, audio test, and silence button.
-- Live machine-status image preview and an OCR diagnostics log.
+- Displays the latest reading in mA with an interactive 0–300 mA gauge. Default alarm threshold: 125 mA.
+- Low-current alarm with an enable switch, threshold control, test button, and silence button.
+- Alarm settings: the sound can repeat until silenced or play only two 3-beep cycles.
+- Temporal hysteresis: require 1, 2, or 3 consecutive low readings before sounding the alarm.
+- If the status page or image is unavailable, the dashboard switches to an amber source warning and does not trigger the alarm.
 - Alarm settings persist in `localStorage`.
 
 ## Live demo
@@ -17,6 +19,8 @@ https://20leunam.github.io/ALBA-beam-current-monitor/
 ## Usage
 
 Open the page and click **Start monitoring**. Keep the tab open — all OCR runs in the browser and there is no backend. The alarm uses the Web Audio API, so the first user interaction is required to enable audio.
+
+Use **Alarm settings** to change the sound mode and the number of readings required to confirm a drop. Use the link at the bottom of the page to suggest changes or report issues.
 
 ## Notes
 
