@@ -747,17 +747,27 @@
     padding: 24px;
   }
 
-  /* Toolbar & Action Buttons */
+  /* Monitoring Controls (inside the current-reading card) */
   .action-strip {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 14px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .action-strip .btn-row button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: 13px;
+  }
+
+  .action-strip .interval-note {
+    text-align: center;
   }
 
   .btn-row {
@@ -1091,6 +1101,16 @@
             </div>
           </div>
 
+          <!-- Monitoring Controls -->
+          <div class="action-strip">
+            <div class="btn-row">
+              <button id="start" type="button">Start monitoring</button>
+              <button id="stop" type="button" disabled>Stop</button>
+              <button id="check-now" type="button">Read now</button>
+            </div>
+            <span class="interval-note">Automatic check every 30 s · Keep tab open</span>
+          </div>
+
           <!-- Alarm Threshold & Audio Configuration -->
           <div class="alarm-panel">
             <div class="alarm-panel-header">
@@ -1140,16 +1160,6 @@
           </div>
         </div>
       </article>
-    </section>
-
-    <!-- Action Bar -->
-    <section class="action-strip">
-      <div class="btn-row">
-        <button id="start" type="button">Start monitoring</button>
-        <button id="stop" type="button" disabled>Stop</button>
-        <button id="check-now" type="button">Read now</button>
-      </div>
-      <span class="interval-note">Automatic check every 30 s · Keep tab open</span>
     </section>
 
     <!-- Telemetry Status Bar -->
