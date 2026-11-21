@@ -1,0 +1,1476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALBA | Machine Current Monitor</title>
+<style>
+  :root {
+    --bg-page: #f2f5f9;
+    --bg-card: #ffffff;
+    --bg-subtle: #f8fafc;
+    --border-color: #d0d9e3;
+    --border-strong: #bcc8d6;
+    --alba-navy: #0a2540;
+    --alba-blue: #003366;
+    --steel-blue: #1d6fa5;
+    --steel-blue-hover: #165682;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --green-ok: #15803d;
+    --green-bg: #f0fdf4;
+    --green-border: #bbf7d0;
+    --amber-warn: #d97706;
+    --red-alarm: #b91c1c;
+    --red-bg: #fef2f2;
+    --red-border: #fecaca;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--bg-page);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Institutional Header */
+  .top-header {
+    background-color: var(--alba-navy);
+    color: #ffffff;
+    border-bottom: 3px solid var(--steel-blue);
+    padding: 12px 16px;
+  }
+
+  .header-inner {
+    width: min(1040px, 100%);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .logo-badge {
+    background-color: #ffffff;
+    color: var(--alba-navy);
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    padding: 6px 10px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  h1 {
+    font-size: clamp(15px, 3.8vw, 18px);
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+  }
+
+  .subtitle {
+    font-size: clamp(11px, 2.8vw, 12.5px);
+    color: #cbd5e1;
+    margin-top: 2px;
+  }
+
+  .header-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* Connection & Wake Lock Badges */
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 6px 11px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #f8fafc;
+  }
+
+  .status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background-color: #94a3b8;
+    flex-shrink: 0;
+  }
+
+  .status-dot.live {
+    background-color: #22c55e;
+  }
+
+  .status-dot.alarm {
+    background-color: #ef4444;
+    animation: pulse-dot 0.8s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+  }
+
+  /* Main Container */
+  main {
+    width: min(1040px, 100%);
+    margin: 16px auto;
+    padding: 0 12px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Low Current Alarm Banner */
+  .alarm-banner {
+    display: none;
+    background-color: var(--red-bg);
+    border: 2px solid var(--red-alarm);
+    border-left: 6px solid var(--red-alarm);
+    color: var(--red-alarm);
+    padding: 14px 16px;
+    border-radius: 6px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    box-shadow: 0 4px 14px rgba(185, 28, 28, 0.14);
+    animation: banner-flash 1.6s ease-in-out infinite;
+  }
+
+  @keyframes banner-flash {
+    0%, 100% { background-color: #fef2f2; }
+    50% { background-color: #fee2e2; }
+  }
+
+  .alarm-banner.active {
+    display: flex;
+  }
+
+  .alarm-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: clamp(13.5px, 3.5vw, 15px);
+    flex: 1 1 240px;
+  }
+
+  .alarm-tag {
+    background-color: var(--red-alarm);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  /* 2-Column Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 14px;
+    align-items: stretch;
+  }
+
+  /* Clean Laboratory Cards */
+  .card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 11px 16px;
+    background-color: var(--bg-subtle);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--alba-blue);
+  }
+
+  .card-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  .card-body {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* Primary Numeric Readout */
+  .readout-box {
+    background-color: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 16px;
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+
+  .readout-box.alarm-state {
+    background-color: var(--red-bg);
+    border-color: var(--red-alarm);
+  }
+
+  .readout-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .readout-channel {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-muted);
+  }
+
+  .reading {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 4px 0 12px;
+  }
+
+  .value {
+    font-family: var(--font-mono);
+    font-size: clamp(3rem, 11vw, 4.6rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: var(--alba-navy);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .readout-box.alarm-state .value {
+    color: var(--red-alarm);
+  }
+
+  .unit {
+    font-family: var(--font-mono);
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--steel-blue);
+  }
+
+  .readout-box.alarm-state .unit {
+    color: var(--red-alarm);
+  }
+
+  /* Interactive Gauge + Threshold Slider */
+  .gauge-wrap {
+    margin-top: 4px;
+  }
+
+  .gauge-hint {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .gauge-slider-container {
+    position: relative;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    touch-action: pan-y;
+  }
+
+  .gauge-track {
+    width: 100%;
+    height: 14px;
+    background-color: #e2e8f0;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    pointer-events: none;
+  }
+
+  .gauge-fill {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background-color: var(--green-ok);
+    border-radius: 2px;
+    transition: width 0.3s ease, background-color 0.2s ease;
+  }
+
+  .gauge-fill.low {
+    background-color: var(--red-alarm);
+  }
+
+  /* Synchronized Transparent Range Input Overlaid on Gauge */
+  #threshold-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background: transparent;
+    cursor: ew-resize;
+    z-index: 3;
+  }
+
+  #threshold-slider:focus {
+    outline: none;
+  }
+
+  #threshold-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 14px;
+    background: transparent;
+    border: none;
+  }
+
+  #threshold-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 28px;
+    margin-top: -7px;
+    border-radius: 4px;
+    background-color: #3b82f6;
+    border: 2px solid #eff6ff;
+    box-shadow: 0 1px 4px rgba(10, 37, 64, 0.35), 0 0 0 1px rgba(37, 99, 235, 0.25);
+    cursor: grab;
+    transition: transform 0.1s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  #threshold-slider:hover::-webkit-slider-thumb {
+    background-color: #2563eb;
+    box-shadow: 0 2px 6px rgba(10, 37, 64, 0.4), 0 0 0 3px rgba(59, 130, 246, 0.22);
+  }
+
+  #threshold-slider::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    transform: scale(1.08);
+    background-color: #1d4ed8;
+    box-shadow: 0 2px 6px rgba(10, 37, 64, 0.45), 0 0 0 4px rgba(37, 99, 235, 0.28);
+  }
+
+  #threshold-slider::-moz-range-track {
+    width: 100%;
+    height: 14px;
+    background: transparent;
+    border: none;
+  }
+
+  #threshold-slider::-moz-range-thumb {
+    width: 18px;
+    height: 28px;
+    border-radius: 4px;
+    background-color: #3b82f6;
+    border: 2px solid #eff6ff;
+    box-shadow: 0 1px 4px rgba(10, 37, 64, 0.35), 0 0 0 1px rgba(37, 99, 235, 0.25);
+    cursor: grab;
+    transition: transform 0.1s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  #threshold-slider:hover::-moz-range-thumb {
+    background-color: #2563eb;
+    box-shadow: 0 2px 6px rgba(10, 37, 64, 0.4), 0 0 0 3px rgba(59, 130, 246, 0.22);
+  }
+
+  #threshold-slider.disabled-slider::-webkit-slider-thumb {
+    background-color: #94a3b8;
+    border-color: #f8fafc;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+  }
+
+  #threshold-slider.disabled-slider::-moz-range-thumb {
+    background-color: #94a3b8;
+    border-color: #f8fafc;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+  }
+
+  .gauge-scale {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* Integrated Alarm Settings Panel */
+  .alarm-panel {
+    margin-top: 14px;
+    padding: 14px;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+  }
+
+  .alarm-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .alarm-state-badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 3px;
+    background-color: var(--green-bg);
+    color: var(--green-ok);
+    border: 1px solid var(--green-border);
+    white-space: nowrap;
+  }
+
+  .alarm-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .control-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    min-height: 44px;
+    user-select: none;
+  }
+
+  input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--steel-blue);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  input[type="number"] {
+    width: 86px;
+    min-height: 44px;
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    background-color: #ffffff;
+    border: 1px solid var(--border-strong);
+    border-radius: 5px;
+  }
+
+  input[type="number"]:focus {
+    outline: 2px solid rgba(29, 111, 165, 0.25);
+    border-color: var(--steel-blue);
+  }
+
+  .card-footer-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* Machine Status Image Preview */
+  .preview-canvas-wrap {
+    flex: 1;
+    min-height: 220px;
+    background-color: #1e293b;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    padding: 8px;
+  }
+
+  #preview {
+    display: block;
+    max-width: 100%;
+    max-height: 330px;
+    object-fit: contain;
+    border-radius: 2px;
+  }
+
+  .empty-state {
+    color: #94a3b8;
+    font-size: 13px;
+    text-align: center;
+    padding: 24px;
+  }
+
+  /* Toolbar & Action Buttons */
+  .action-strip {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    min-height: 46px;
+    padding: 10px 16px;
+    border-radius: 5px;
+    border: 1px solid var(--border-strong);
+    background-color: #ffffff;
+    color: var(--text-primary);
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background-color 0.15s, border-color 0.15s, transform 0.05s;
+  }
+
+  button:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  button:hover:not(:disabled) {
+    background-color: var(--bg-subtle);
+    border-color: #94a3b8;
+  }
+
+  button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  #start {
+    background-color: var(--steel-blue);
+    border-color: var(--steel-blue);
+    color: #ffffff;
+  }
+
+  #start:hover:not(:disabled) {
+    background-color: var(--steel-blue-hover);
+    border-color: var(--steel-blue-hover);
+  }
+
+  #stop {
+    color: var(--red-alarm);
+    border-color: #fca5a5;
+    background-color: #ffffff;
+  }
+
+  #stop:hover:not(:disabled) {
+    background-color: var(--red-bg);
+  }
+
+  #ack-alarm {
+    background-color: var(--red-alarm);
+    border-color: #7f1d1d;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    min-height: 48px;
+    padding: 12px 20px;
+  }
+
+  #ack-alarm:hover {
+    background-color: #991b1b;
+  }
+
+  #test-sound.testing {
+    background-color: #fef2f2;
+    border-color: var(--red-alarm);
+    color: var(--red-alarm);
+  }
+
+  .interval-note {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* Telemetry Status Bar */
+  .telemetry-bar {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  #status {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  #last-read {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* Collapsible Diagnostics */
+  details {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--alba-blue);
+    user-select: none;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+  }
+
+  #log {
+    max-height: 180px;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background-color: #0f172a;
+    color: #e2e8f0;
+    border-radius: 4px;
+    padding: 12px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    line-height: 1.45;
+    margin-top: 10px;
+  }
+
+  @media (max-width: 720px) {
+    .top-header {
+      padding: 12px;
+    }
+
+    .header-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .header-badges {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    main {
+      margin: 12px auto;
+      padding: 0 10px 28px;
+      gap: 12px;
+    }
+
+    .grid {
+      grid-template-columns: 1fr;
+    }
+
+    .alarm-banner {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    #ack-alarm {
+      width: 100%;
+      text-align: center;
+    }
+
+    .alarm-controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+
+    .control-label {
+      justify-content: space-between;
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      padding: 6px 12px;
+    }
+
+    #test-sound {
+      width: 100%;
+    }
+
+    .action-strip {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    #start {
+      grid-column: 1 / -1;
+    }
+
+    .interval-note {
+      text-align: center;
+    }
+
+    .telemetry-bar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+  }
+</style>
+</head>
+<body>
+  <header class="top-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="logo-badge">ALBA</div>
+        <div>
+          <h1>Machine Current Monitor</h1>
+          <div class="subtitle">ALBA Synchrotron · Live Beam Current OCR Readout (msGUI)</div>
+        </div>
+      </div>
+      <div class="header-badges">
+        <div class="status-pill">
+          <span id="live-dot" class="status-dot"></span>
+          <span id="connection-label">Stopped</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Low Current Critical Alarm Banner -->
+    <div id="alarm-banner" class="alarm-banner" role="alert">
+      <div class="alarm-banner-content">
+        <span class="alarm-tag">Alarm</span>
+        <span id="alarm-banner-msg">Beam current dropped below configured threshold</span>
+      </div>
+      <button id="ack-alarm" type="button">SILENCE ALARM</button>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <section class="grid">
+      <article class="card">
+        <div class="card-header">
+          <span class="card-title">Beam Current</span>
+          <span class="card-meta" id="lcd-alarm-tag">Threshold: 100 mA</span>
+        </div>
+
+        <div class="card-body">
+          <div id="lcd-box" class="readout-box">
+            <div class="readout-top">
+              <span>Current reading</span>
+              <span class="readout-channel">SR_DCCT_CURRENT</span>
+            </div>
+            <div class="reading">
+              <span class="value" id="current-mA" data-value="">—</span>
+              <span class="unit">mA</span>
+            </div>
+
+            <!-- Interactive Gauge + Synchronized Threshold Slider -->
+            <div class="gauge-wrap">
+              <div class="gauge-hint">
+                <span>Drag blue marker to set threshold</span>
+                <span id="slider-readout" style="font-family:var(--font-mono);color:var(--steel-blue);font-weight:600;">100 mA</span>
+              </div>
+              <div class="gauge-slider-container">
+                <div class="gauge-track">
+                  <span id="range-fill" class="gauge-fill"></span>
+                </div>
+                <input
+                  type="range"
+                  id="threshold-slider"
+                  min="0"
+                  max="300"
+                  step="1"
+                  value="100"
+                  aria-label="Minimum current alarm threshold slider (0 to 300 mA)"
+                >
+              </div>
+              <div class="gauge-scale">
+                <span>0 mA</span>
+                <span>75</span>
+                <span>150</span>
+                <span>225</span>
+                <span>300 mA</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alarm Threshold & Audio Configuration -->
+          <div class="alarm-panel">
+            <div class="alarm-panel-header">
+              <span>Low-current wake-up alarm</span>
+              <span id="alarm-status-label" class="alarm-state-badge">Armed</span>
+            </div>
+            <div class="alarm-controls">
+              <label class="control-label" for="alarm-enabled">
+                <span>Enable alarm</span>
+                <input type="checkbox" id="alarm-enabled" checked>
+              </label>
+
+              <label class="control-label" for="alarm-threshold">
+                <span>Alert if &lt;</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;">
+                  <input type="number" id="alarm-threshold" min="0" max="300" step="1" value="100" inputmode="decimal">
+                  <strong>mA</strong>
+                </span>
+              </label>
+
+              <button id="test-sound" type="button">Test alarm</button>
+            </div>
+          </div>
+
+          <div class="card-footer-info">
+            <span>Expected range: 0–300 mA</span>
+            <span id="reading-state">Waiting for data</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-header">
+          <span class="card-title">Machine Status Image</span>
+          <span class="card-meta">Latest sample</span>
+        </div>
+        <div class="card-body">
+          <div class="preview-canvas-wrap" id="preview-wrap">
+            <div class="empty-state" id="empty-preview">The latest machine status image will appear here once monitoring starts.</div>
+            <img id="preview" alt="Latest ALBA machine status image" hidden>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Action Bar -->
+    <section class="action-strip">
+      <div class="btn-row">
+        <button id="start" type="button">Start monitoring</button>
+        <button id="stop" type="button" disabled>Stop</button>
+        <button id="check-now" type="button">Read now</button>
+      </div>
+      <span class="interval-note">Automatic check every 30 s · Keep tab open</span>
+    </section>
+
+    <!-- Telemetry Status Bar -->
+    <section class="telemetry-bar">
+      <div id="status">Ready. Click "Start monitoring" to read the current value.</div>
+      <div id="last-read">Last successful reading: never</div>
+    </section>
+
+    <!-- Diagnostics -->
+    <details>
+      <summary>Diagnostics &amp; OCR log</summary>
+      <p style="margin: 8px 0 0; font-size: 12.5px; color: var(--text-secondary);">Reads the public status image using OCR to extract the large <code>CURRENT</code> value (0–300 mA). The value is exposed in <code>#current-mA</code> with its numeric reading in the <code>data-value</code> attribute.</p>
+      <pre id="log"></pre>
+    </details>
+  </main>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+(() => {
+  const PAGE_URL = 'https://public.cells.es/machine-status/msGUI.html';
+  const INTERVAL_MS = 30000;
+  const STORAGE_KEY_THRESHOLD = 'alba_current_alarm_threshold';
+  const STORAGE_KEY_ENABLED = 'alba_current_alarm_enabled';
+
+  const valueEl = document.getElementById('current-mA');
+  const statusEl = document.getElementById('status');
+  const logEl = document.getElementById('log');
+  const lastEl = document.getElementById('last-read');
+  const preview = document.getElementById('preview');
+  const emptyPreview = document.getElementById('empty-preview');
+  const liveDot = document.getElementById('live-dot');
+  const connectionLabel = document.getElementById('connection-label');
+  const rangeFill = document.getElementById('range-fill');
+  const thresholdSlider = document.getElementById('threshold-slider');
+  const sliderReadout = document.getElementById('slider-readout');
+  const readingState = document.getElementById('reading-state');
+  const startButton = document.getElementById('start');
+  const stopButton = document.getElementById('stop');
+  const checkNowButton = document.getElementById('check-now');
+
+  const alarmThresholdInput = document.getElementById('alarm-threshold');
+  const alarmEnabledCheckbox = document.getElementById('alarm-enabled');
+  const testSoundButton = document.getElementById('test-sound');
+  const ackAlarmButton = document.getElementById('ack-alarm');
+  const alarmBanner = document.getElementById('alarm-banner');
+  const alarmBannerMsg = document.getElementById('alarm-banner-msg');
+  const alarmStatusLabel = document.getElementById('alarm-status-label');
+  const lcdBox = document.getElementById('lcd-box');
+  const lcdAlarmTag = document.getElementById('lcd-alarm-tag');
+
+  let timer = null, busy = false, worker = null, stopped = true;
+  let audioCtx = null;
+  let alarmLoopTimer = null;
+  let testStopTimer = null;
+  let isTestRunning = false;
+  let alarmMutedForCurrentDrop = false;
+  let lastNumericReading = null;
+
+  try {
+    const savedThreshold = localStorage.getItem(STORAGE_KEY_THRESHOLD);
+    if (savedThreshold !== null && !Number.isNaN(Number(savedThreshold))) {
+      const clamped = Math.max(0, Math.min(300, Number(savedThreshold)));
+      alarmThresholdInput.value = clamped;
+      thresholdSlider.value = clamped;
+    }
+    const savedEnabled = localStorage.getItem(STORAGE_KEY_ENABLED);
+    if (savedEnabled !== null) {
+      alarmEnabledCheckbox.checked = savedEnabled === 'true';
+    }
+  } catch (e) {}
+
+  function getThreshold() {
+    const val = Number(alarmThresholdInput.value);
+    if (!Number.isFinite(val)) return 100;
+    return Math.max(0, Math.min(300, val));
+  }
+
+  function updateThresholdVisuals() {
+    const threshold = getThreshold();
+    const enabled = alarmEnabledCheckbox.checked;
+
+    thresholdSlider.value = threshold;
+    thresholdSlider.classList.toggle('disabled-slider', !enabled);
+    sliderReadout.textContent = threshold + ' mA';
+    sliderReadout.style.color = enabled ? 'var(--steel-blue)' : 'var(--text-muted)';
+    lcdAlarmTag.textContent = enabled ? ('Threshold: ' + threshold + ' mA') : 'Alarm: disabled';
+
+    if (!enabled) {
+      alarmStatusLabel.textContent = 'Disabled';
+      alarmStatusLabel.style.backgroundColor = '#f1f5f9';
+      alarmStatusLabel.style.color = '#64748b';
+      alarmStatusLabel.style.borderColor = '#cbd5e1';
+    } else if (alarmMutedForCurrentDrop) {
+      alarmStatusLabel.textContent = 'Silenced';
+      alarmStatusLabel.style.backgroundColor = '#fffbeb';
+      alarmStatusLabel.style.color = '#b45309';
+      alarmStatusLabel.style.borderColor = '#fde68a';
+    } else if (alarmLoopTimer !== null) {
+      alarmStatusLabel.textContent = 'RINGING';
+      alarmStatusLabel.style.backgroundColor = '#fef2f2';
+      alarmStatusLabel.style.color = '#b91c1c';
+      alarmStatusLabel.style.borderColor = '#fca5a5';
+    } else {
+      alarmStatusLabel.textContent = 'Armed';
+      alarmStatusLabel.style.backgroundColor = '#f0fdf4';
+      alarmStatusLabel.style.color = '#15803d';
+      alarmStatusLabel.style.borderColor = '#bbf7d0';
+    }
+  }
+
+  function ensureAudioContext() {
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtx = new AudioContextClass();
+      }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  }
+
+  // Crisp, moderately piercing 3-equal-tone alert (1050 Hz)
+  function playAlarmBurst() {
+    try {
+      const ctx = ensureAudioContext();
+      if (ctx) {
+        const now = ctx.currentTime;
+        // Three identical 180 ms pulses with 120 ms gaps
+        const pulseTimes = [0.00, 0.30, 0.60];
+        const pulseDuration = 0.18;
+        const toneFreq = 1050; // Crisp 1050 Hz control-room alert pitch
+
+        pulseTimes.forEach(offset => {
+          const oscPrimary = ctx.createOscillator();
+          const oscEdge = ctx.createOscillator();
+          const filter = ctx.createBiquadFilter();
+          const gainNode = ctx.createGain();
+
+          // Triangle + square blend filtered at 2600 Hz: cuts through room noise without harshness
+          oscPrimary.type = 'triangle';
+          oscPrimary.frequency.setValueAtTime(toneFreq, now + offset);
+
+          oscEdge.type = 'square';
+          oscEdge.frequency.setValueAtTime(toneFreq, now + offset);
+
+          const edgeGain = ctx.createGain();
+          edgeGain.gain.setValueAtTime(0.28, now + offset);
+
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(2600, now + offset);
+
+          gainNode.gain.setValueAtTime(0.0001, now + offset);
+          gainNode.gain.linearRampToValueAtTime(0.62, now + offset + 0.015);
+          gainNode.gain.setValueAtTime(0.58, now + offset + pulseDuration - 0.02);
+          gainNode.gain.exponentialRampToValueAtTime(0.0001, now + offset + pulseDuration + 0.02);
+
+          oscPrimary.connect(filter);
+          oscEdge.connect(edgeGain);
+          edgeGain.connect(filter);
+          filter.connect(gainNode);
+          gainNode.connect(ctx.destination);
+
+          oscPrimary.start(now + offset);
+          oscEdge.start(now + offset);
+          oscPrimary.stop(now + offset + pulseDuration + 0.03);
+          oscEdge.stop(now + offset + pulseDuration + 0.03);
+        });
+      }
+
+      if ('vibrate' in navigator) {
+        navigator.vibrate([180, 120, 180, 120, 180]);
+      }
+    } catch (e) {
+      log('Unable to play alarm audio: ' + e.message);
+    }
+  }
+
+  function startAlarmLoop(isTest = false) {
+    if (alarmLoopTimer !== null) return;
+    isTestRunning = isTest;
+    playAlarmBurst();
+    alarmLoopTimer = setInterval(() => {
+      playAlarmBurst();
+    }, 1800);
+    updateThresholdVisuals();
+  }
+
+  function stopAlarmLoop() {
+    if (alarmLoopTimer !== null) {
+      clearInterval(alarmLoopTimer);
+      alarmLoopTimer = null;
+    }
+    if (testStopTimer !== null) {
+      clearTimeout(testStopTimer);
+      testStopTimer = null;
+    }
+    isTestRunning = false;
+    testSoundButton.textContent = 'Test alarm';
+    testSoundButton.classList.remove('testing');
+    if ('vibrate' in navigator) {
+      try { navigator.vibrate(0); } catch (e) {}
+    }
+    updateThresholdVisuals();
+  }
+
+  function evaluateAlarm(currentValue, allowSound = true) {
+    updateThresholdVisuals();
+    if (currentValue === null || !Number.isFinite(currentValue)) return;
+
+    const threshold = getThreshold();
+    const enabled = alarmEnabledCheckbox.checked;
+    const isLow = enabled && currentValue < threshold;
+
+    if (isLow) {
+      lcdBox.classList.add('alarm-state');
+      rangeFill.classList.add('low');
+      liveDot.classList.add('alarm');
+      alarmBanner.classList.add('active');
+      alarmBannerMsg.textContent = `LOW BEAM CURRENT: ${currentValue} mA (threshold: ${threshold} mA)`;
+      readingState.textContent = 'Below threshold';
+      readingState.style.color = '#b91c1c';
+      readingState.style.fontWeight = '700';
+
+      if (!alarmMutedForCurrentDrop && allowSound) {
+        if (alarmLoopTimer === null) {
+          log(`CONTINUOUS ALARM TRIGGERED: ${currentValue} mA < ${threshold} mA.`);
+        }
+        startAlarmLoop(false);
+      } else if (alarmMutedForCurrentDrop) {
+        stopAlarmLoop();
+      }
+    } else {
+      alarmMutedForCurrentDrop = false;
+      stopAlarmLoop();
+      lcdBox.classList.remove('alarm-state');
+      rangeFill.classList.remove('low');
+      liveDot.classList.remove('alarm');
+      alarmBanner.classList.remove('active');
+      readingState.textContent = currentValue <= 300 ? 'Within expected range' : 'Out of range';
+      readingState.style.color = '';
+      readingState.style.fontWeight = '';
+      updateThresholdVisuals();
+    }
+  }
+
+  function setThresholdValue(newValue) {
+    const clamped = Math.max(0, Math.min(300, Number(newValue) || 0));
+    alarmThresholdInput.value = clamped;
+    thresholdSlider.value = clamped;
+    try { localStorage.setItem(STORAGE_KEY_THRESHOLD, String(clamped)); } catch (e) {}
+    alarmMutedForCurrentDrop = false;
+    evaluateAlarm(lastNumericReading, true);
+  }
+
+  // Synchronize manual numeric input -> slider & alarm evaluation
+  alarmThresholdInput.addEventListener('input', () => {
+    const raw = alarmThresholdInput.value;
+    if (raw === '') return;
+    const clamped = Math.max(0, Math.min(300, Number(raw)));
+    thresholdSlider.value = clamped;
+    try { localStorage.setItem(STORAGE_KEY_THRESHOLD, String(clamped)); } catch (e) {}
+    alarmMutedForCurrentDrop = false;
+    evaluateAlarm(lastNumericReading, true);
+  });
+
+  alarmThresholdInput.addEventListener('blur', () => {
+    setThresholdValue(getThreshold());
+  });
+
+  // Synchronize draggable gauge slider -> numeric input & alarm evaluation
+  thresholdSlider.addEventListener('input', () => {
+    setThresholdValue(thresholdSlider.value);
+  });
+
+  alarmEnabledCheckbox.addEventListener('change', () => {
+    ensureAudioContext();
+    try { localStorage.setItem(STORAGE_KEY_ENABLED, String(alarmEnabledCheckbox.checked)); } catch (e) {}
+    alarmMutedForCurrentDrop = false;
+    if (!alarmEnabledCheckbox.checked) {
+      stopAlarmLoop();
+    }
+    evaluateAlarm(lastNumericReading, true);
+  });
+
+  testSoundButton.addEventListener('click', () => {
+    ensureAudioContext();
+    if (isTestRunning) {
+      stopAlarmLoop();
+      log('Alarm sound test stopped manually.');
+      return;
+    }
+    if (alarmLoopTimer !== null) return;
+
+    testSoundButton.textContent = 'Stop test';
+    testSoundButton.classList.add('testing');
+    startAlarmLoop(true);
+    log('Alarm sound test started (two 3-beep cycles).');
+
+    testStopTimer = setTimeout(() => {
+      if (isTestRunning) {
+        stopAlarmLoop();
+        log('Alarm sound test completed.');
+      }
+    }, 3600);
+  });
+
+  ackAlarmButton.addEventListener('click', () => {
+    alarmMutedForCurrentDrop = true;
+    stopAlarmLoop();
+    log('Alarm silenced by operator until current rises above threshold.');
+  });
+
+  updateThresholdVisuals();
+
+  function log(message) {
+    logEl.textContent = new Date().toLocaleTimeString() + ' — ' + message + '\n' + logEl.textContent;
+  }
+
+  function setStatus(message, good = false) {
+    statusEl.textContent = message;
+    statusEl.style.color = good ? '#15803d' : '#1e293b';
+  }
+
+  function cacheBust(url) {
+    const u = new URL(url);
+    u.searchParams.set('_ocr_refresh', Date.now());
+    return u.href;
+  }
+
+  async function getWorker() {
+    if (worker) return worker;
+    if (!window.Tesseract) throw new Error('Could not load the OCR engine. Check your internet connection.');
+    setStatus('Loading OCR engine…');
+    worker = await Tesseract.createWorker('eng');
+    await worker.setParameters({
+      tessedit_char_whitelist: '0123456789.,mMA CURRENTcurrent ',
+      preserve_interword_spaces: '1',
+      tessedit_pageseg_mode: '11'
+    });
+    return worker;
+  }
+
+  function collectImageUrls(doc, base) {
+    const urls = [];
+    for (const img of doc.images) {
+      const src = img.getAttribute('src') || img.getAttribute('data-src');
+      if (src) { try { urls.push(new URL(src, base).href); } catch (e) {} }
+      const srcset = img.getAttribute('srcset');
+      if (srcset) srcset.split(',').forEach(part => {
+        const candidate = part.trim().split(/\s+/)[0];
+        try { urls.push(new URL(candidate, base).href); } catch (e) {}
+      });
+    }
+    for (const el of doc.querySelectorAll('[style*="background"]')) {
+      const match = (el.getAttribute('style') || '').match(/url\(["']?(.*?)["']?\)/i);
+      if (match) { try { urls.push(new URL(match[1], base).href); } catch (e) {} }
+    }
+    return [...new Set(urls)].sort((a, b) => imageScore(b) - imageScore(a));
+  }
+
+  function imageScore(url) {
+    return /status|machine|synch|beam|current|gui|screen|image|png|jpg/i.test(url) ? 1 : 0;
+  }
+
+  async function loadImage(url) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.crossOrigin = 'anonymous';
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('Could not load image (CORS or invalid image URL): ' + url));
+      image.src = cacheBust(url);
+    });
+  }
+
+  async function locateImageUrls() {
+    const response = await fetch(cacheBust(PAGE_URL), { cache: 'no-store', credentials: 'omit' });
+    if (!response.ok) throw new Error('Page returned HTTP ' + response.status);
+    const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+    const urls = collectImageUrls(doc, PAGE_URL);
+    if (!urls.length) throw new Error('No image element found in the page HTML. The image may be generated dynamically by JavaScript.');
+    log('Found ' + urls.length + ' image candidate(s).');
+    return urls;
+  }
+
+  function showImage(canvas) {
+    preview.src = canvas.toDataURL('image/png');
+    preview.hidden = false;
+    emptyPreview.hidden = true;
+  }
+
+  // Select the numeric OCR word nearest to the CURRENT label, preferring a value
+  // between 0 and 300 and a large, clearly printed word.
+  function selectCurrentReading(words) {
+    const clean = s => (s || '').replace(/[^a-z]/gi, '').toUpperCase();
+    const currentWords = words.filter(w => clean(w.text) === 'CURRENT' || clean(w.text).includes('CURRENT'));
+    const numericWords = words.map(w => {
+      const raw = (w.text || '').replace(',', '.').replace(/[^\d.]/g, '');
+      if (!raw || !/^\d+(?:\.\d+)?$/.test(raw)) return null;
+      const number = Number(raw);
+      if (!Number.isFinite(number) || number < 0 || number > 300) return null;
+      return { ...w, number, raw };
+    }).filter(Boolean);
+    if (!numericWords.length) return null;
+
+    if (currentWords.length) {
+      const candidates = [];
+      for (const label of currentWords) {
+        const lx = (label.bbox.x0 + label.bbox.x1) / 2;
+        const ly = (label.bbox.y0 + label.bbox.y1) / 2;
+        const labelHeight = Math.max(1, label.bbox.y1 - label.bbox.y0);
+        for (const n of numericWords) {
+          const nx = (n.bbox.x0 + n.bbox.x1) / 2;
+          const ny = (n.bbox.y0 + n.bbox.y1) / 2;
+          const dx = Math.abs(nx - lx), dy = Math.abs(ny - ly);
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const height = Math.max(1, n.bbox.y1 - n.bbox.y0);
+          // Prefer values below or to the right of CURRENT, and larger glyphs.
+          const directionPenalty = (ny < ly - labelHeight * 0.35 ? 1.7 : 0) + (nx < lx - labelHeight ? 0.7 : 0);
+          const sizeBonus = Math.min(2, height / labelHeight);
+          candidates.push({ word: n, score: distance + directionPenalty * labelHeight - sizeBonus * labelHeight * 2 });
+        }
+      }
+      candidates.sort((a, b) => a.score - b.score);
+      if (candidates.length && candidates[0].score < 18 * Math.max(1, currentWords[0].bbox.y1 - currentWords[0].bbox.y0)) {
+        return { value: candidates[0].word.raw, number: candidates[0].word.number, confidence: candidates[0].word.confidence, method: 'near CURRENT label' };
+      }
+    }
+
+    // Fallback: choose the largest OCR number in the expected 0–300 mA range.
+    numericWords.sort((a, b) => {
+      const ah = (a.bbox.y1 - a.bbox.y0), bh = (b.bbox.y1 - b.bbox.y0);
+      return bh - ah;
+    });
+    const best = numericWords[0];
+    return { value: best.raw, number: best.number, confidence: best.confidence, method: 'largest 0–300 number (CURRENT label not detected)' };
+  }
+
+  async function analyzeImage(url) {
+    const image = await loadImage(url);
+    if (image.naturalWidth < 100 || image.naturalHeight < 50) throw new Error('Image is too small: ' + image.naturalWidth + '×' + image.naturalHeight);
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    canvas.getContext('2d').drawImage(image, 0, 0);
+
+    const scale = Math.min(3, 2200 / canvas.width);
+    const enlarged = document.createElement('canvas');
+    enlarged.width = Math.round(canvas.width * scale);
+    enlarged.height = Math.round(canvas.height * scale);
+    const ctx = enlarged.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(canvas, 0, 0, enlarged.width, enlarged.height);
+    showImage(enlarged);
+
+    const ocr = await getWorker();
+    const result = await ocr.recognize(enlarged);
+    const words = (result.data.words || []).filter(w => w.text && w.bbox);
+    const reading = selectCurrentReading(words);
+    log('OCR text: ' + (result.data.text || '').replace(/\s+/g, ' ').slice(0, 500));
+    if (!reading) throw new Error('Could not identify a current value between 0 and 300 mA.');
+
+    const numericVal = Number(reading.number.toFixed(2));
+    const display = numericVal.toString();
+    lastNumericReading = numericVal;
+
+    valueEl.textContent = display;
+    valueEl.dataset.value = display;
+    rangeFill.style.width = Math.min(100, (numericVal / 300 * 100)) + '%';
+    lastEl.textContent = 'Last successful reading: ' + new Date().toLocaleString();
+    setStatus('Current detected: ' + display + ' mA · ' + reading.method, true);
+    log('Selected current: ' + display + ' mA (' + reading.method + ', OCR confidence ' + Math.round(reading.confidence || 0) + '%).');
+
+    evaluateAlarm(numericVal, true);
+  }
+
+  async function cycle(force = false) {
+    if (busy || (stopped && !force)) return;
+    busy = true;
+    try {
+      setStatus('Checking machine status image…');
+      const urls = await locateImageUrls();
+      let lastError = null, success = false;
+      for (const url of urls) {
+        try {
+          await analyzeImage(url);
+          success = true;
+          break;
+        } catch (error) {
+          lastError = error;
+          log('Could not analyze ' + url + ': ' + error.message);
+        }
+      }
+      if (!success) throw lastError || new Error('Could not analyze any image.');
+    } catch (error) {
+      setStatus('Reading failed: ' + error.message);
+      log('ERROR: ' + error.message);
+    } finally {
+      busy = false;
+    }
+  }
+
+  startButton.addEventListener('click', () => {
+    ensureAudioContext();
+    if (timer) clearInterval(timer);
+    stopped = false;
+    startButton.disabled = true;
+    stopButton.disabled = false;
+    liveDot.classList.add('live');
+    connectionLabel.textContent = 'Monitoring';
+    log('Monitoring started. Refresh interval: 30 seconds.');
+    cycle();
+    timer = setInterval(cycle, INTERVAL_MS);
+  });
+
+  stopButton.addEventListener('click', () => {
+    stopped = true;
+    if (timer) clearInterval(timer);
+    timer = null;
+    stopAlarmLoop();
+    startButton.disabled = false;
+    stopButton.disabled = true;
+    liveDot.classList.remove('live');
+    liveDot.classList.remove('alarm');
+    connectionLabel.textContent = 'Stopped';
+    setStatus('Monitoring stopped.');
+    log('Monitoring stopped.');
+  });
+
+  checkNowButton.addEventListener('click', () => {
+    ensureAudioContext();
+    cycle(true);
+  });
+})();
+</script>
+</body>
+</html>
