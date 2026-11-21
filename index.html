@@ -581,8 +581,10 @@
   }
 
   .cycles-setting {
+    display: flex;
+    align-items: center;
     justify-content: space-between;
-    padding-left: 26px;
+    gap: 8px;
   }
 
   .cycles-setting input[type="number"] {
@@ -596,6 +598,12 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 12px;
+  }
+
+  .alarm-card .alarm-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
 
   .control-label {
@@ -685,35 +693,8 @@
     outline-offset: 2px;
   }
 
-  /* Prominent alert threshold control */
   .threshold-control {
-    background-color: #eff6ff;
-    border: 1px solid var(--steel-blue);
-    border-radius: 5px;
-    padding: 4px 10px;
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--alba-navy);
-    box-shadow: 0 1px 3px rgba(29, 111, 165, 0.12);
-  }
-
-  .threshold-input-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .threshold-control input[type="number"] {
-    width: 92px;
-    min-height: 40px;
-    font-size: 20px;
-    color: var(--steel-blue);
-    border-color: var(--steel-blue);
-  }
-
-  .threshold-control strong {
-    font-size: 15px;
-    color: var(--steel-blue);
+    justify-content: space-between;
   }
 
   /* Machine Status Image Preview */
@@ -844,12 +825,6 @@
     background-color: #991b1b;
   }
 
-  #test-sound.testing {
-    background-color: #fef2f2;
-    border-color: var(--red-alarm);
-    color: var(--red-alarm);
-  }
-
   .interval-note {
     font-size: 12px;
     color: var(--text-muted);
@@ -954,10 +929,6 @@
       border: 1px solid var(--border-color);
       border-radius: 5px;
       padding: 6px 12px;
-    }
-
-    #test-sound {
-      width: 100%;
     }
 
     .setting-group label {
@@ -1125,14 +1096,10 @@
             </label>
 
             <label class="control-label threshold-control" for="alarm-threshold">
-              <span>Alert if &lt;</span>
-              <span class="threshold-input-wrap">
-                <input type="number" id="alarm-threshold" min="0" max="300" step="1" value="125" inputmode="decimal">
-                <strong>mA</strong>
-              </span>
+              <span>Alert if current is below:</span>
+              <input type="number" id="alarm-threshold" min="0" max="300" step="1" value="125" inputmode="decimal">
+              <strong>mA</strong>
             </label>
-
-            <button id="test-sound" type="button">Test alarm</button>
           </div>
         </div>
       </article>
@@ -1176,11 +1143,10 @@
         <fieldset class="setting-group">
           <legend>Alarm sound</legend>
           <label><input type="radio" name="alarm-sound-mode" value="continuous" checked> Repeat until silenced</label>
-          <label><input type="radio" name="alarm-sound-mode" value="limited"> Fixed number of cycles</label>
-          <label class="cycles-setting" for="alarm-cycles">
-            <span>Cycles (3 beeps each)</span>
+          <div class="cycles-setting">
+            <label><input type="radio" name="alarm-sound-mode" value="limited"> Fixed number of cycles</label>
             <input type="number" id="alarm-cycles" min="1" max="10" step="1" value="2" inputmode="numeric" disabled>
-          </label>
+          </div>
         </fieldset>
         <fieldset class="setting-group">
           <legend>Confirm low current after</legend>
@@ -1220,7 +1186,6 @@
 
   const alarmThresholdInput = document.getElementById('alarm-threshold');
   const alarmEnabledCheckbox = document.getElementById('alarm-enabled');
-  const testSoundButton = document.getElementById('test-sound');
   const ackAlarmButton = document.getElementById('ack-alarm');
   const alarmBanner = document.getElementById('alarm-banner');
   const alarmBannerMsg = document.getElementById('alarm-banner-msg');
@@ -1410,8 +1375,6 @@
       alarmLoopTimer = null;
     }
     isTestRunning = false;
-    testSoundButton.textContent = 'Test alarm';
-    testSoundButton.classList.remove('testing');
     if ('vibrate' in navigator) {
       try { navigator.vibrate(0); } catch (e) {}
     }
@@ -1549,21 +1512,6 @@
       stopAlarmLoop();
     }
     evaluateAlarm(lastNumericReading, true);
-  });
-
-  testSoundButton.addEventListener('click', () => {
-    ensureAudioContext();
-    if (isTestRunning) {
-      stopAlarmLoop();
-      log('Alarm sound test stopped manually.');
-      return;
-    }
-    if (alarmLoopTimer !== null) return;
-
-    testSoundButton.textContent = 'Stop test';
-    testSoundButton.classList.add('testing');
-    startAlarmLoop(true);
-    log('Alarm sound test started (two cycles).');
   });
 
   ackAlarmButton.addEventListener('click', () => {
