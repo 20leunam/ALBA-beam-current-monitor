@@ -222,6 +222,15 @@
     align-items: stretch;
   }
 
+  /* Image first on wide screens; DOM order is kept on small screens */
+  .image-card {
+    order: -1;
+  }
+
+  .image-card .card-body {
+    justify-content: center;
+  }
+
   /* Clean Laboratory Cards */
   .card {
     background-color: var(--bg-card);
@@ -711,8 +720,10 @@
 
   /* Machine Status Image Preview */
   .preview-canvas-wrap {
-    flex: 1;
-    min-height: 220px;
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 0;
+    aspect-ratio: 16 / 9;
     background-color: #1e293b;
     border: 1px solid var(--border-strong);
     border-radius: 4px;
@@ -724,8 +735,8 @@
 
   #preview {
     display: block;
-    max-width: 100%;
-    max-height: 330px;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
     border-radius: 2px;
   }
@@ -911,6 +922,10 @@
       grid-template-columns: 1fr;
     }
 
+    .image-card {
+      order: 0;
+    }
+
     .alarm-banner {
       flex-direction: column;
       align-items: stretch;
@@ -1008,7 +1023,7 @@
 
     <!-- Main Dashboard Grid -->
     <section class="grid">
-      <article class="card">
+      <article class="card current-card">
         <div class="card-header">
           <span class="card-title">Beam Current</span>
           <span class="card-meta" id="lcd-alarm-tag">Threshold: 125 mA</span>
@@ -1092,7 +1107,7 @@
         </div>
       </article>
 
-      <article class="card">
+      <article class="card image-card">
         <div class="card-header">
           <span class="card-title">Machine Status Image</span>
           <span class="card-meta">Latest sample</span>
