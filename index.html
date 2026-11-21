@@ -167,6 +167,13 @@
     align-items: stretch;
   }
 
+  .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+
   .image-card {
     order: -1;
   }
@@ -457,39 +464,6 @@
     margin-top: 2px;
   }
 
-  /* Integrated Alarm Settings Panel */
-  .alarm-panel {
-    margin-top: 7px;
-    padding: 9px;
-    background-color: #ffffff;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-  }
-
-  .alarm-panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 7px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .alarm-state-badge {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 3px;
-    background-color: var(--green-bg);
-    color: var(--green-ok);
-    border: 1px solid var(--green-border);
-    white-space: nowrap;
-  }
-
   .settings-toggle {
     width: 38px;
     min-height: 34px;
@@ -661,16 +635,85 @@
     border-color: var(--steel-blue);
   }
 
-  .card-footer-info {
-    display: flex;
-    justify-content: space-between;
+  /* Sliding switch for the alarm enable control */
+  .switch-label {
+    gap: 10px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .switch-label input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .switch {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    border-radius: 13px;
+    background-color: #cbd5e1;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .switch::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.35);
+    transition: transform 0.2s;
+  }
+
+  .switch-label input:checked + .switch {
+    background-color: var(--green-ok);
+  }
+
+  .switch-label input:checked + .switch::after {
+    transform: translateX(22px);
+  }
+
+  .switch-label input:focus-visible + .switch {
+    outline: 2px solid var(--steel-blue);
+    outline-offset: 2px;
+  }
+
+  /* Prominent alert threshold control */
+  .threshold-control {
+    background-color: #eff6ff;
+    border: 1px solid var(--steel-blue);
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--alba-navy);
+    box-shadow: 0 1px 3px rgba(29, 111, 165, 0.12);
+  }
+
+  .threshold-input-wrap {
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 14px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border-color);
-    font-size: 12px;
-    color: var(--text-muted);
+    gap: 6px;
+  }
+
+  .threshold-control input[type="number"] {
+    width: 92px;
+    min-height: 40px;
+    font-size: 20px;
+    color: var(--steel-blue);
+    border-color: var(--steel-blue);
+  }
+
+  .threshold-control strong {
+    font-size: 15px;
+    color: var(--steel-blue);
   }
 
   /* Machine Status Image Preview */
@@ -1002,6 +1045,7 @@
 
     <!-- Main Dashboard Grid -->
     <section class="grid">
+      <div class="right-column">
       <article class="card current-card">
         <div class="card-header">
           <span class="card-title">Beam Current</span>
@@ -1059,42 +1103,40 @@
             <span class="interval-note">Automatic check every 30 s · Keep tab open</span>
           </div>
 
-          <!-- Alarm Threshold & Audio Configuration -->
-          <div class="alarm-panel">
-            <div class="alarm-panel-header">
-              <span>Low-current alarm</span>
-              <span id="alarm-status-label" class="alarm-state-badge">Armed</span>
-              <button id="alarm-settings-toggle" class="settings-toggle" type="button" aria-label="Alarm settings" title="Alarm settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="alarm-settings-modal">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                </svg>
-              </button>
-            </div>
-            <div class="alarm-controls">
-              <label class="control-label" for="alarm-enabled">
-                <span>Enable alarm</span>
-                <input type="checkbox" id="alarm-enabled" checked>
-              </label>
+        </div>
+      </article>
 
-              <label class="control-label" for="alarm-threshold">
-                <span>Alert if &lt;</span>
-                <span style="display:inline-flex;align-items:center;gap:6px;">
-                  <input type="number" id="alarm-threshold" min="0" max="300" step="1" value="125" inputmode="decimal">
-                  <strong>mA</strong>
-                </span>
-              </label>
+      <article class="card alarm-card">
+        <div class="card-header">
+          <span class="card-title">Low-current alarm</span>
+          <button id="alarm-settings-toggle" class="settings-toggle" type="button" aria-label="Alarm settings" title="Alarm settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="alarm-settings-modal">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="alarm-controls">
+            <label class="control-label switch-label" for="alarm-enabled">
+              <span>Enable alarm</span>
+              <input type="checkbox" id="alarm-enabled" checked>
+              <span class="switch" aria-hidden="true"></span>
+            </label>
 
-              <button id="test-sound" type="button">Test alarm</button>
-            </div>
-          </div>
+            <label class="control-label threshold-control" for="alarm-threshold">
+              <span>Alert if &lt;</span>
+              <span class="threshold-input-wrap">
+                <input type="number" id="alarm-threshold" min="0" max="300" step="1" value="125" inputmode="decimal">
+                <strong>mA</strong>
+              </span>
+            </label>
 
-          <div class="card-footer-info">
-            <span>Expected range: 0–300 mA</span>
-            <span id="reading-state">Waiting for data</span>
+            <button id="test-sound" type="button">Test alarm</button>
           </div>
         </div>
       </article>
+      </div>
 
       <article class="card image-card">
         <div class="card-header">
@@ -1172,7 +1214,6 @@
   const rangeFill = document.getElementById('range-fill');
   const thresholdSlider = document.getElementById('threshold-slider');
   const sliderReadout = document.getElementById('slider-readout');
-  const readingState = document.getElementById('reading-state');
   const startButton = document.getElementById('start');
   const stopButton = document.getElementById('stop');
   const checkNowButton = document.getElementById('check-now');
@@ -1183,7 +1224,6 @@
   const ackAlarmButton = document.getElementById('ack-alarm');
   const alarmBanner = document.getElementById('alarm-banner');
   const alarmBannerMsg = document.getElementById('alarm-banner-msg');
-  const alarmStatusLabel = document.getElementById('alarm-status-label');
   const lcdBox = document.getElementById('lcd-box');
   const lcdAlarmTag = document.getElementById('lcd-alarm-tag');
   const settingsToggle = document.getElementById('alarm-settings-toggle');
@@ -1261,39 +1301,7 @@
     thresholdSlider.classList.toggle('disabled-slider', !enabled);
     sliderReadout.textContent = threshold + ' mA';
     sliderReadout.style.color = enabled ? 'var(--steel-blue)' : 'var(--text-muted)';
-    lcdAlarmTag.textContent = enabled ? ('Threshold: ' + threshold + ' mA') : 'Alarm: disabled';
-
-    if (!enabled) {
-      alarmStatusLabel.textContent = 'Disabled';
-      alarmStatusLabel.style.backgroundColor = '#f1f5f9';
-      alarmStatusLabel.style.color = '#64748b';
-      alarmStatusLabel.style.borderColor = '#cbd5e1';
-    } else if (sourceWarning) {
-      alarmStatusLabel.textContent = 'Source warning';
-      alarmStatusLabel.style.backgroundColor = '#fffbeb';
-      alarmStatusLabel.style.color = '#b45309';
-      alarmStatusLabel.style.borderColor = '#fde68a';
-    } else if (lowReadingCount > 0 && lowReadingCount < getConfirmReadings()) {
-      alarmStatusLabel.textContent = 'Confirming ' + lowReadingCount + '/' + getConfirmReadings();
-      alarmStatusLabel.style.backgroundColor = '#fef2f2';
-      alarmStatusLabel.style.color = '#b91c1c';
-      alarmStatusLabel.style.borderColor = '#fca5a5';
-    } else if (alarmMutedForCurrentDrop) {
-      alarmStatusLabel.textContent = 'Silenced';
-      alarmStatusLabel.style.backgroundColor = '#fef2f2';
-      alarmStatusLabel.style.color = '#b91c1c';
-      alarmStatusLabel.style.borderColor = '#fca5a5';
-    } else if (alarmLoopTimer !== null) {
-      alarmStatusLabel.textContent = 'RINGING';
-      alarmStatusLabel.style.backgroundColor = '#fef2f2';
-      alarmStatusLabel.style.color = '#b91c1c';
-      alarmStatusLabel.style.borderColor = '#fca5a5';
-    } else {
-      alarmStatusLabel.textContent = 'Armed';
-      alarmStatusLabel.style.backgroundColor = '#f0fdf4';
-      alarmStatusLabel.style.color = '#15803d';
-      alarmStatusLabel.style.borderColor = '#bbf7d0';
-    }
+    lcdAlarmTag.textContent = 'Threshold: ' + threshold + ' mA';
   }
 
   function ensureAudioContext() {
@@ -1423,9 +1431,6 @@
     rangeFill.classList.remove('flash');
     rangeFill.classList.add('low');
     alarmBanner.classList.add('active');
-    readingState.textContent = 'Below threshold — silenced';
-    readingState.style.color = '#b91c1c';
-    readingState.style.fontWeight = '700';
   }
 
   function evaluateAlarm(currentValue, allowSound = true, isNewReading = false) {
@@ -1444,9 +1449,6 @@
     if (isLow && !isNewReading && lowReadingCount === 0) {
       // A setting change made the last reading look low; wait for a fresh reading.
       stopAlarmLoop();
-      readingState.textContent = 'Below threshold — awaiting next reading';
-      readingState.style.color = '#b91c1c';
-      readingState.style.fontWeight = '700';
       updateThresholdVisuals();
       return;
     }
@@ -1459,9 +1461,6 @@
         stopAlarmLoop();
         lcdBox.classList.add('alarm-state', 'pending');
         rangeFill.classList.add('low');
-        readingState.textContent = `Below threshold — confirming ${lowReadingCount}/${required}`;
-        readingState.style.color = '#b91c1c';
-        readingState.style.fontWeight = '700';
         setStatus(`Low current ${currentValue} mA — waiting for confirmation (${lowReadingCount}/${required})`, 'alarm');
         updateThresholdVisuals();
         return;
@@ -1477,9 +1476,6 @@
         lcdBox.classList.add('alarm-state', 'confirmed');
         rangeFill.classList.add('low', 'flash');
         alarmBanner.classList.add('active');
-        readingState.textContent = 'Below threshold';
-        readingState.style.color = '#b91c1c';
-        readingState.style.fontWeight = '700';
       }
 
       if (!alarmMutedForCurrentDrop && allowSound) {
@@ -1492,23 +1488,17 @@
       lowReadingCount = 0;
       alarmMutedForCurrentDrop = false;
       stopAlarmLoop();
-      readingState.textContent = currentValue <= 300 ? 'Within expected range' : 'Out of range';
-      readingState.style.color = '';
-      readingState.style.fontWeight = '';
       updateThresholdVisuals();
     }
   }
 
-  function setSourceWarning(message, detail = 'Source unavailable — alarm not triggered') {
+  function setSourceWarning(message) {
     sourceWarning = true;
     lowReadingCount = 0;
     stopAlarmLoop();
     clearAlarmVisuals();
     lcdBox.classList.add('warning-state');
     rangeFill.classList.add('warning');
-    readingState.textContent = detail;
-    readingState.style.color = '#d97706';
-    readingState.style.fontWeight = '700';
     setStatus('Reading failed: ' + message, 'warn');
     updateThresholdVisuals();
   }
@@ -1518,9 +1508,6 @@
     lowReadingCount = 0;
     stopAlarmLoop();
     clearAlarmVisuals();
-    readingState.textContent = 'Reading failed — alarm not triggered';
-    readingState.style.color = '';
-    readingState.style.fontWeight = '700';
     setStatus('Reading failed: ' + message, 'normal');
     updateThresholdVisuals();
   }
@@ -1834,10 +1821,8 @@
       }
       if (!success) throw lastError || appError('IMAGE_LOAD', 'Could not analyze any image.');
     } catch (error) {
-      if (error.code === 'IMAGE_LOAD') {
-        setSourceWarning(error.message, 'Image unavailable — alarm not triggered');
-      } else if (error.code === 'NO_VALUE') {
-        setSourceWarning(error.message, 'No valid reading in image — alarm not triggered');
+      if (error.code === 'IMAGE_LOAD' || error.code === 'NO_VALUE') {
+        setSourceWarning(error.message);
       } else {
         setReadError(error.message);
       }
@@ -1869,9 +1854,6 @@
     clearAlarmVisuals();
     sourceWarning = false;
     lowReadingCount = 0;
-    readingState.textContent = 'Waiting for data';
-    readingState.style.color = '';
-    readingState.style.fontWeight = '';
     setStatus('Monitoring stopped.');
     log('Monitoring stopped.');
   });

@@ -6,7 +6,7 @@ A lightweight browser dashboard that polls the ALBA Synchrotron public machine-s
 
 - Starts monitoring automatically when the page opens; the public `msGUI.html` status page is fetched every 30 seconds and OCR runs on the linked `msGUI.png` image.
 - Displays the latest reading in mA with an interactive 0–300 mA gauge. Default alarm threshold: 125 mA.
-- Low-current alarm with an enable switch, threshold control, test button, and silence button.
+- The **Low-current alarm** is its own card, using the same panel style as the other cards. It has a sliding enable switch, a prominent **Alert if <** threshold field, a test button, and there is no Armed/Disabled badge.
 - The gear icon opens a closable pop-up for alarm settings: the sound can repeat until silenced or play a fixed number of cycles (1–10), where each cycle is exactly three beeps.
 - Temporal hysteresis: require 1, 2, or 3 consecutive low readings before sounding the alarm. While unconfirmed, the readout is steady red; once confirmed it flashes red and the alarm sounds.
 - Silencing the alarm (or finishing the fixed-cycle mode) stops the sound and the flashing, but keeps the red low-current state until the reading recovers.
