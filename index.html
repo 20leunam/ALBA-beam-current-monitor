@@ -60,7 +60,7 @@
   }
 
   .header-inner {
-    width: min(1040px, 100%);
+    width: min(1280px, 100%);
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -159,7 +159,7 @@
 
   /* Main Container */
   main {
-    width: min(1040px, 100%);
+    width: min(1280px, 100%);
     margin: 16px auto;
     padding: 0 12px 32px;
     display: flex;
@@ -214,22 +214,20 @@
     flex-shrink: 0;
   }
 
-  /* 2-Column Grid */
+  /* Single column by default; two columns are enabled on wide screens */
   .grid {
     display: grid;
-    grid-template-columns: 1fr 1.1fr;
+    grid-template-columns: 1fr;
     gap: 14px;
     align-items: stretch;
   }
 
-  /* Image first on wide screens; DOM order is kept on small screens */
   .image-card {
     order: -1;
-    align-self: start;
   }
 
   .image-card .card-body {
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   /* Clean Laboratory Cards */
@@ -991,7 +989,29 @@
       gap: 4px;
     }
   }
-</style>
+
+   /* Wide screens: larger image on the left, filling the whole row height */
+   @media (min-width: 1101px) {
+     .grid {
+       grid-template-columns: 1.55fr 1fr;
+     }
+
+     .image-card {
+       order: -1;
+       align-self: stretch;
+     }
+
+     .image-card .card-body {
+       justify-content: flex-start;
+     }
+
+     .preview-canvas-wrap {
+       flex: 1 1 auto;
+       min-height: 220px;
+       aspect-ratio: auto;
+     }
+   }
+ </style>
 </head>
 <body>
   <header class="top-header">
