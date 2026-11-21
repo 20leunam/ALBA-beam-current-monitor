@@ -118,7 +118,6 @@
     display: none;
     background-color: var(--red-bg);
     border: 2px solid var(--red-alarm);
-    border-left: 6px solid var(--red-alarm);
     color: var(--red-alarm);
     padding: 14px 16px;
     border-radius: 6px;
@@ -605,6 +604,17 @@
     accent-color: var(--steel-blue);
     cursor: pointer;
     flex-shrink: 0;
+  }
+
+  .cycles-setting {
+    justify-content: space-between;
+    padding-left: 26px;
+  }
+
+  .cycles-setting input[type="number"] {
+    width: 70px;
+    min-height: 36px;
+    font-size: 14px;
   }
 
   .alarm-controls {
@@ -1124,7 +1134,11 @@
         <fieldset class="setting-group">
           <legend>Alarm sound</legend>
           <label><input type="radio" name="alarm-sound-mode" value="continuous" checked> Repeat until silenced</label>
-          <label><input type="radio" name="alarm-sound-mode" value="limited"> Two 3-beep cycles only</label>
+          <label><input type="radio" name="alarm-sound-mode" value="limited"> Fixed number of cycles</label>
+          <label class="cycles-setting" for="alarm-cycles">
+            <span>Cycles (3 beeps each)</span>
+            <input type="number" id="alarm-cycles" min="1" max="10" step="1" value="2" inputmode="numeric" disabled>
+          </label>
         </fieldset>
         <fieldset class="setting-group">
           <legend>Confirm low current after</legend>
@@ -1147,6 +1161,7 @@
   const STORAGE_KEY_THRESHOLD = 'alba_current_alarm_threshold';
   const STORAGE_KEY_ENABLED = 'alba_current_alarm_enabled';
   const STORAGE_KEY_SOUND_MODE = 'alba_current_alarm_sound_mode';
+  const STORAGE_KEY_ALARM_CYCLES = 'alba_current_alarm_cycles';
   const STORAGE_KEY_CONFIRM_READINGS = 'alba_current_alarm_confirm_readings';
 
   const valueEl = document.getElementById('current-mA');
@@ -1176,12 +1191,12 @@
   const settingsClose = document.getElementById('alarm-settings-close');
   const settingsDone = document.getElementById('alarm-settings-done');
   const soundModeRadios = document.querySelectorAll('input[name="alarm-sound-mode"]');
+  const alarmCyclesInput = document.getElementById('alarm-cycles');
   const confirmRadios = document.querySelectorAll('input[name="alarm-confirm-readings"]');
 
   let timer = null, busy = false, worker = null, stopped = true;
   let audioCtx = null;
   let alarmLoopTimer = null;
-  let testStopTimer = null;
   let alarmLoopToken = 0;
   let isTestRunning = false;
   let alarmMutedForCurrentDrop = false;
@@ -1205,6 +1220,10 @@
       const radio = document.querySelector('input[name="alarm-sound-mode"][value="' + savedSoundMode + '"]');
       if (radio) radio.checked = true;
     }
+    const savedCycles = localStorage.getItem(STORAGE_KEY_ALARM_CYCLES);
+    if (savedCycles !== null && Number(savedCycles) >= 1 && Number(savedCycles) <= 10) {
+      alarmCyclesInput.value = savedCycles;
+    }
     const savedConfirm = localStorage.getItem(STORAGE_KEY_CONFIRM_READINGS);
     if (savedConfirm !== null && Number(savedConfirm) >= 1 && Number(savedConfirm) <= 3) {
       const radio = document.querySelector('input[name="alarm-confirm-readings"][value="' + savedConfirm + '"]');
@@ -1221,6 +1240,11 @@
   function getSoundMode() {
     const selected = document.querySelector('input[name="alarm-sound-mode"]:checked');
     return selected ? selected.value : 'continuous';
+  }
+
+  function getAlarmCycles() {
+    const cycles = Number(alarmCyclesInput.value);
+    return Math.max(1, Math.min(10, Number.isFinite(cycles) ? Math.round(cycles) : 2));
   }
 
   function getConfirmReadings() {
@@ -1345,25 +1369,28 @@
     if (alarmLoopTimer !== null) return;
     const loopToken = ++alarmLoopToken;
     isTestRunning = isTest;
-    playAlarmBurst();
-    alarmLoopTimer = setInterval(() => {
+    // One cycle is exactly three beeps. A test always uses two cycles.
+    const limited = isTest || getSoundMode() === 'limited';
+    const cycles = isTest ? 2 : getAlarmCycles();
+    let played = 0;
+
+    const playNext = () => {
+      if (loopToken !== alarmLoopToken) return;
       playAlarmBurst();
-    }, 1800);
-    if (testStopTimer !== null) {
-      clearTimeout(testStopTimer);
-      testStopTimer = null;
-    }
-    // A test and the "limited" mode both play exactly two 3-beep cycles.
-    if (isTest || getSoundMode() === 'limited') {
-      testStopTimer = setTimeout(() => {
-        if (loopToken !== alarmLoopToken) return;
+      played += 1;
+      if (limited && played >= cycles) {
         if (!isTest) {
           alarmMutedForCurrentDrop = true;
           setSilencedVisuals();
         }
         stopAlarmLoop();
-        log(isTest ? 'Alarm sound test completed.' : 'Two alarm cycles completed; sound silenced until current recovers.');
-      }, 3600);
+        log(isTest ? 'Alarm sound test completed.' : `${cycles} alarm cycle(s) completed; sound silenced until current recovers.`);
+      }
+    };
+
+    playNext();
+    if (!limited || cycles > 1) {
+      alarmLoopTimer = setInterval(playNext, 1800);
     }
     updateThresholdVisuals();
   }
@@ -1373,10 +1400,6 @@
     if (alarmLoopTimer !== null) {
       clearInterval(alarmLoopTimer);
       alarmLoopTimer = null;
-    }
-    if (testStopTimer !== null) {
-      clearTimeout(testStopTimer);
-      testStopTimer = null;
     }
     isTestRunning = false;
     testSoundButton.textContent = 'Test alarm';
@@ -1553,7 +1576,7 @@
     testSoundButton.textContent = 'Stop test';
     testSoundButton.classList.add('testing');
     startAlarmLoop(true);
-    log('Alarm sound test started (two 3-beep cycles).');
+    log('Alarm sound test started (two cycles).');
   });
 
   ackAlarmButton.addEventListener('click', () => {
@@ -1591,16 +1614,27 @@
     if (event.key === 'Escape' && !settingsModal.hidden) closeSettings();
   });
 
+  function updateSoundModeUI() {
+    alarmCyclesInput.disabled = getSoundMode() !== 'limited';
+  }
+
   soundModeRadios.forEach(radio => {
     radio.addEventListener('change', () => {
       try { localStorage.setItem(STORAGE_KEY_SOUND_MODE, getSoundMode()); } catch (e) {}
+      updateSoundModeUI();
       const wasRinging = alarmLoopTimer !== null && !isTestRunning;
       if (wasRinging) {
         stopAlarmLoop();
         if (!alarmMutedForCurrentDrop) startAlarmLoop(false);
       }
-      log('Alarm sound mode: ' + (getSoundMode() === 'limited' ? 'two 3-beep cycles' : 'repeat until silenced') + '.');
+      log('Alarm sound mode: ' + (getSoundMode() === 'limited' ? `${getAlarmCycles()} x 3-beep cycle(s)` : 'repeat until silenced') + '.');
     });
+  });
+
+  alarmCyclesInput.addEventListener('change', () => {
+    alarmCyclesInput.value = getAlarmCycles();
+    try { localStorage.setItem(STORAGE_KEY_ALARM_CYCLES, String(getAlarmCycles())); } catch (e) {}
+    log('Alarm cycles: ' + getAlarmCycles() + ' x 3 beeps.');
   });
 
   confirmRadios.forEach(radio => {
@@ -1612,6 +1646,7 @@
   });
 
   updateThresholdVisuals();
+  updateSoundModeUI();
 
   // Diagnostics panel was removed from the UI; messages stay in the browser console.
   function log(message) {
