@@ -693,8 +693,9 @@
     outline-offset: 2px;
   }
 
-  .threshold-control {
-    justify-content: space-between;
+  .alarm-card .threshold-control {
+    justify-content: flex-start;
+    gap: 8px;
   }
 
   /* Machine Status Image Preview */
@@ -749,8 +750,10 @@
 
   .action-strip .interval-note {
     text-align: center;
-    font-size: 10px;
-    line-height: 1.1;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    line-height: 1.5;
   }
 
   .btn-row {
