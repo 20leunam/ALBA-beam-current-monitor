@@ -243,7 +243,7 @@
   }
 
   .card-header {
-    padding: 11px 16px;
+    padding: 8px 14px;
     background-color: var(--bg-subtle);
     border-bottom: 1px solid var(--border-color);
     display: flex;
@@ -267,7 +267,7 @@
   }
 
   .card-body {
-    padding: 16px;
+    padding: 12px 14px;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -279,7 +279,7 @@
     background-color: var(--bg-subtle);
     border: 1px solid var(--border-color);
     border-radius: 5px;
-    padding: 16px;
+    padding: 9px 12px;
     transition: background-color 0.2s, border-color 0.2s;
   }
 
@@ -321,12 +321,12 @@
     display: flex;
     align-items: baseline;
     gap: 10px;
-    margin: 4px 0 12px;
+    margin: 2px 0 5px;
   }
 
   .value {
     font-family: var(--font-mono);
-    font-size: clamp(3rem, 11vw, 4.6rem);
+    font-size: clamp(2.6rem, 9vw, 3.3rem);
     font-weight: 700;
     line-height: 1.05;
     letter-spacing: -0.03em;
@@ -359,7 +359,7 @@
 
   /* Interactive Gauge + Threshold Slider */
   .gauge-wrap {
-    margin-top: 4px;
+    margin-top: 0;
   }
 
   .gauge-hint {
@@ -368,12 +368,12 @@
     align-items: center;
     font-size: 11px;
     color: var(--text-muted);
-    margin-bottom: 6px;
+    margin-bottom: 3px;
   }
 
   .gauge-slider-container {
     position: relative;
-    height: 36px;
+    height: 26px;
     display: flex;
     align-items: center;
     touch-action: pan-y;
@@ -514,8 +514,8 @@
 
   /* Integrated Alarm Settings Panel */
   .alarm-panel {
-    margin-top: 14px;
-    padding: 14px;
+    margin-top: 7px;
+    padding: 9px;
     background-color: #ffffff;
     border: 1px solid var(--border-color);
     border-radius: 5px;
@@ -527,7 +527,7 @@
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
-    margin-bottom: 12px;
+    margin-bottom: 7px;
     font-size: 12.5px;
     font-weight: 600;
     color: var(--text-primary);
@@ -752,8 +752,8 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
-    padding: 12px 0;
+    gap: 5px;
+    padding: 7px 0;
     border-top: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
   }
@@ -761,13 +761,16 @@
   .action-strip .btn-row button {
     flex: 1 1 0;
     min-width: 0;
+    min-height: 36px;
     padding-left: 8px;
     padding-right: 8px;
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .action-strip .interval-note {
     text-align: center;
+    font-size: 10px;
+    line-height: 1.1;
   }
 
   .btn-row {
@@ -1000,7 +1003,7 @@
     }
   }
 
-   /* Wide screens: larger image on the left, filling the whole row height */
+   /* Wide screens: larger image on the left, kept at the source 16:9 ratio */
    @media (min-width: 1101px) {
      .grid {
        grid-template-columns: 1.55fr 1fr;
@@ -1012,13 +1015,13 @@
      }
 
      .image-card .card-body {
-       justify-content: flex-start;
+       justify-content: center;
      }
 
      .preview-canvas-wrap {
-       flex: 1 1 auto;
-       min-height: 220px;
-       aspect-ratio: auto;
+       flex: 0 0 auto;
+       min-height: 0;
+       aspect-ratio: 16 / 9;
      }
    }
  </style>
@@ -1246,6 +1249,7 @@
   let audioCtx = null;
   let alarmLoopTimer = null;
   let testStopTimer = null;
+  let alarmLoopToken = 0;
   let isTestRunning = false;
   let alarmMutedForCurrentDrop = false;
   let lastNumericReading = null;
@@ -1319,9 +1323,9 @@
       alarmStatusLabel.style.borderColor = '#fca5a5';
     } else if (alarmMutedForCurrentDrop) {
       alarmStatusLabel.textContent = 'Silenced';
-      alarmStatusLabel.style.backgroundColor = '#eff6ff';
-      alarmStatusLabel.style.color = '#1d6fa5';
-      alarmStatusLabel.style.borderColor = '#bfdbfe';
+      alarmStatusLabel.style.backgroundColor = '#fef2f2';
+      alarmStatusLabel.style.color = '#b91c1c';
+      alarmStatusLabel.style.borderColor = '#fca5a5';
     } else if (alarmLoopTimer !== null) {
       alarmStatusLabel.textContent = 'RINGING';
       alarmStatusLabel.style.backgroundColor = '#fef2f2';
@@ -1406,6 +1410,7 @@
 
   function startAlarmLoop(isTest = false) {
     if (alarmLoopTimer !== null) return;
+    const loopToken = ++alarmLoopToken;
     isTestRunning = isTest;
     playAlarmBurst();
     alarmLoopTimer = setInterval(() => {
@@ -1418,17 +1423,20 @@
     // A test and the "limited" mode both play exactly two 3-beep cycles.
     if (isTest || getSoundMode() === 'limited') {
       testStopTimer = setTimeout(() => {
-        if (!isTestRunning) return;
-        const wasTest = isTestRunning;
-        if (!wasTest) alarmMutedForCurrentDrop = true;
+        if (loopToken !== alarmLoopToken) return;
+        if (!isTest) {
+          alarmMutedForCurrentDrop = true;
+          setSilencedVisuals();
+        }
         stopAlarmLoop();
-        log(wasTest ? 'Alarm sound test completed.' : 'Two alarm cycles completed; sound silenced until current recovers.');
+        log(isTest ? 'Alarm sound test completed.' : 'Two alarm cycles completed; sound silenced until current recovers.');
       }, 3600);
     }
     updateThresholdVisuals();
   }
 
   function stopAlarmLoop() {
+    alarmLoopToken += 1;
     if (alarmLoopTimer !== null) {
       clearInterval(alarmLoopTimer);
       alarmLoopTimer = null;
@@ -1451,6 +1459,19 @@
     rangeFill.classList.remove('low', 'flash', 'warning');
     liveDot.classList.remove('alarm', 'alarm-pending', 'warning');
     alarmBanner.classList.remove('active');
+  }
+
+  // Keep the red alarm state after silencing, but stop all flashing.
+  function setSilencedVisuals() {
+    lcdBox.classList.remove('confirmed');
+    lcdBox.classList.add('alarm-state');
+    rangeFill.classList.remove('flash');
+    rangeFill.classList.add('low');
+    liveDot.classList.add('alarm');
+    alarmBanner.classList.add('active');
+    readingState.textContent = 'Below threshold — silenced';
+    readingState.style.color = '#b91c1c';
+    readingState.style.fontWeight = '700';
   }
 
   function evaluateAlarm(currentValue, allowSound = true, isNewReading = false) {
@@ -1494,23 +1515,27 @@
         return;
       }
 
-      // Confirmed: flashing red, banner and sound.
-      lcdBox.classList.add('alarm-state', 'confirmed');
-      rangeFill.classList.add('low', 'flash');
-      liveDot.classList.add('alarm');
-      alarmBanner.classList.add('active');
+      // Confirmed: red alarm. It flashes only while the sound is active;
+      // after silencing (manually or by limited mode) it stays steady red.
       alarmBannerMsg.textContent = `LOW BEAM CURRENT: ${currentValue} mA (threshold: ${threshold} mA)`;
-      readingState.textContent = 'Below threshold';
-      readingState.style.color = '#b91c1c';
-      readingState.style.fontWeight = '700';
+      if (alarmMutedForCurrentDrop) {
+        setSilencedVisuals();
+        stopAlarmLoop();
+      } else {
+        lcdBox.classList.add('alarm-state', 'confirmed');
+        rangeFill.classList.add('low', 'flash');
+        liveDot.classList.add('alarm');
+        alarmBanner.classList.add('active');
+        readingState.textContent = 'Below threshold';
+        readingState.style.color = '#b91c1c';
+        readingState.style.fontWeight = '700';
+      }
 
       if (!alarmMutedForCurrentDrop && allowSound) {
         if (alarmLoopTimer === null) {
           log(`LOW CURRENT ALARM: ${currentValue} mA < ${threshold} mA (confirmed after ${lowReadingCount} reading(s)).`);
         }
         startAlarmLoop(false);
-      } else if (alarmMutedForCurrentDrop) {
-        stopAlarmLoop();
       }
     } else {
       lowReadingCount = 0;
@@ -1608,6 +1633,7 @@
 
   ackAlarmButton.addEventListener('click', () => {
     alarmMutedForCurrentDrop = true;
+    setSilencedVisuals();
     stopAlarmLoop();
     log('Alarm silenced by operator until current rises above threshold.');
   });
