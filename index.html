@@ -143,6 +143,10 @@
     animation: pulse-dot 0.8s ease-in-out infinite;
   }
 
+  .status-dot.alarm-pending {
+    background-color: var(--red-alarm);
+  }
+
   .status-dot.warning {
     background-color: var(--amber-warn);
     animation: pulse-dot 1.2s ease-in-out infinite;
@@ -276,6 +280,15 @@
     border-color: var(--red-alarm);
   }
 
+  @keyframes alarm-flash {
+    0%, 100% { background-color: var(--red-bg); border-color: var(--red-alarm); }
+    50% { background-color: #fee2e2; border-color: #ef4444; }
+  }
+
+  .readout-box.alarm-state.confirmed {
+    animation: alarm-flash 1s ease-in-out infinite;
+  }
+
   .readout-box.warning-state {
     background-color: var(--amber-bg);
     border-color: var(--amber-warn);
@@ -380,6 +393,15 @@
 
   .gauge-fill.low {
     background-color: var(--red-alarm);
+  }
+
+  @keyframes fill-flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .gauge-fill.low.flash {
+    animation: fill-flash 1s ease-in-out infinite;
   }
 
   .gauge-fill.warning {
@@ -516,12 +538,18 @@
   }
 
   .settings-toggle {
+    width: 38px;
     min-height: 34px;
-    padding: 6px 10px;
-    font-size: 12.5px;
+    padding: 6px;
+    display: inline-grid;
+    place-items: center;
     background-color: var(--bg-subtle);
     border-color: var(--border-color);
     color: var(--alba-blue);
+  }
+
+  .settings-toggle svg {
+    display: block;
   }
 
   .settings-toggle[aria-expanded="true"] {
@@ -530,12 +558,67 @@
     color: var(--steel-blue);
   }
 
-  .alarm-settings {
-    margin-top: 14px;
-    padding-top: 12px;
-    border-top: 1px dashed var(--border-strong);
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(10, 37, 64, 0.5);
     display: grid;
-    gap: 10px;
+    place-items: center;
+    padding: 16px;
+    z-index: 50;
+  }
+
+  .modal {
+    width: min(420px, 100%);
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    box-shadow: 0 18px 45px rgba(10, 37, 64, 0.28);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--alba-navy);
+  }
+
+  .modal-close {
+    min-height: 34px;
+    padding: 2px 10px;
+    font-size: 22px;
+    line-height: 1;
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--text-muted);
+  }
+
+  .modal-body {
+    display: grid;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 16px 16px;
+  }
+
+  #alarm-settings-done {
+    background-color: var(--steel-blue);
+    border-color: var(--steel-blue);
+    color: #ffffff;
   }
 
   .setting-group {
@@ -856,12 +939,15 @@
       width: 100%;
     }
 
-    .settings-toggle {
-      width: 100%;
-    }
-
     .setting-group label {
       min-height: 40px;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+      padding-left: 14px;
+      padding-right: 14px;
     }
 
     .action-strip {
@@ -972,9 +1058,14 @@
           <!-- Alarm Threshold & Audio Configuration -->
           <div class="alarm-panel">
             <div class="alarm-panel-header">
-              <span>Low-current wake-up alarm</span>
+              <span>Low-current alarm</span>
               <span id="alarm-status-label" class="alarm-state-badge">Armed</span>
-              <button id="alarm-settings-toggle" class="settings-toggle" type="button" aria-expanded="false" aria-controls="alarm-settings">Alarm settings</button>
+              <button id="alarm-settings-toggle" class="settings-toggle" type="button" aria-label="Alarm settings" title="Alarm settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="alarm-settings-modal">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </button>
             </div>
             <div class="alarm-controls">
               <label class="control-label" for="alarm-enabled">
@@ -991,19 +1082,6 @@
               </label>
 
               <button id="test-sound" type="button">Test alarm</button>
-            </div>
-            <div id="alarm-settings" class="alarm-settings" hidden>
-              <fieldset class="setting-group">
-                <legend>Alarm sound</legend>
-                <label><input type="radio" name="alarm-sound-mode" value="continuous" checked> Repeat until silenced</label>
-                <label><input type="radio" name="alarm-sound-mode" value="limited"> Two 3-beep cycles only</label>
-              </fieldset>
-              <fieldset class="setting-group">
-                <legend>Confirm low current after</legend>
-                <label><input type="radio" name="alarm-confirm-readings" value="1" checked> 1 reading (immediate)</label>
-                <label><input type="radio" name="alarm-confirm-readings" value="2"> 2 readings (~60 s)</label>
-                <label><input type="radio" name="alarm-confirm-readings" value="3"> 3 readings (~90 s)</label>
-              </fieldset>
             </div>
           </div>
 
@@ -1051,6 +1129,32 @@
     </section>
   </main>
 
+  <!-- Alarm Settings Pop-up -->
+  <div id="alarm-settings-modal" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="alarm-settings-title">
+      <div class="modal-header">
+        <h2 id="alarm-settings-title">Alarm settings</h2>
+        <button id="alarm-settings-close" class="modal-close" type="button" aria-label="Close settings">&times;</button>
+      </div>
+      <div class="modal-body">
+        <fieldset class="setting-group">
+          <legend>Alarm sound</legend>
+          <label><input type="radio" name="alarm-sound-mode" value="continuous" checked> Repeat until silenced</label>
+          <label><input type="radio" name="alarm-sound-mode" value="limited"> Two 3-beep cycles only</label>
+        </fieldset>
+        <fieldset class="setting-group">
+          <legend>Confirm low current after</legend>
+          <label><input type="radio" name="alarm-confirm-readings" value="1" checked> 1 reading (immediate)</label>
+          <label><input type="radio" name="alarm-confirm-readings" value="2"> 2 readings (~60 s)</label>
+          <label><input type="radio" name="alarm-confirm-readings" value="3"> 3 readings (~90 s)</label>
+        </fieldset>
+      </div>
+      <div class="modal-footer">
+        <button id="alarm-settings-done" type="button">Done</button>
+      </div>
+    </div>
+  </div>
+
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 (() => {
@@ -1086,7 +1190,9 @@
   const lcdBox = document.getElementById('lcd-box');
   const lcdAlarmTag = document.getElementById('lcd-alarm-tag');
   const settingsToggle = document.getElementById('alarm-settings-toggle');
-  const settingsPanel = document.getElementById('alarm-settings');
+  const settingsModal = document.getElementById('alarm-settings-modal');
+  const settingsClose = document.getElementById('alarm-settings-close');
+  const settingsDone = document.getElementById('alarm-settings-done');
   const soundModeRadios = document.querySelectorAll('input[name="alarm-sound-mode"]');
   const confirmRadios = document.querySelectorAll('input[name="alarm-confirm-readings"]');
 
@@ -1162,14 +1268,14 @@
       alarmStatusLabel.style.borderColor = '#fde68a';
     } else if (lowReadingCount > 0 && lowReadingCount < getConfirmReadings()) {
       alarmStatusLabel.textContent = 'Confirming ' + lowReadingCount + '/' + getConfirmReadings();
-      alarmStatusLabel.style.backgroundColor = '#fffbeb';
-      alarmStatusLabel.style.color = '#b45309';
-      alarmStatusLabel.style.borderColor = '#fde68a';
+      alarmStatusLabel.style.backgroundColor = '#fef2f2';
+      alarmStatusLabel.style.color = '#b91c1c';
+      alarmStatusLabel.style.borderColor = '#fca5a5';
     } else if (alarmMutedForCurrentDrop) {
       alarmStatusLabel.textContent = 'Silenced';
-      alarmStatusLabel.style.backgroundColor = '#fffbeb';
-      alarmStatusLabel.style.color = '#b45309';
-      alarmStatusLabel.style.borderColor = '#fde68a';
+      alarmStatusLabel.style.backgroundColor = '#eff6ff';
+      alarmStatusLabel.style.color = '#1d6fa5';
+      alarmStatusLabel.style.borderColor = '#bfdbfe';
     } else if (alarmLoopTimer !== null) {
       alarmStatusLabel.textContent = 'RINGING';
       alarmStatusLabel.style.backgroundColor = '#fef2f2';
@@ -1294,15 +1400,20 @@
     updateThresholdVisuals();
   }
 
+  function clearAlarmVisuals() {
+    lcdBox.classList.remove('alarm-state', 'confirmed', 'pending', 'warning-state');
+    rangeFill.classList.remove('low', 'flash', 'warning');
+    liveDot.classList.remove('alarm', 'alarm-pending', 'warning');
+    alarmBanner.classList.remove('active');
+  }
+
   function evaluateAlarm(currentValue, allowSound = true, isNewReading = false) {
     updateThresholdVisuals();
     if (currentValue === null || !Number.isFinite(currentValue)) return;
 
     // A valid reading clears any "source unavailable" warning.
     sourceWarning = false;
-    lcdBox.classList.remove('warning-state');
-    rangeFill.classList.remove('warning');
-    liveDot.classList.remove('warning');
+    clearAlarmVisuals();
     if (!stopped) connectionLabel.textContent = 'Monitoring';
 
     const threshold = getThreshold();
@@ -1313,12 +1424,8 @@
     if (isLow && !isNewReading && lowReadingCount === 0) {
       // A setting change made the last reading look low; wait for a fresh reading.
       stopAlarmLoop();
-      lcdBox.classList.remove('alarm-state', 'warning-state');
-      rangeFill.classList.remove('low', 'warning');
-      liveDot.classList.remove('alarm', 'warning');
-      alarmBanner.classList.remove('active');
       readingState.textContent = 'Below threshold — awaiting next reading';
-      readingState.style.color = '#d97706';
+      readingState.style.color = '#b91c1c';
       readingState.style.fontWeight = '700';
       updateThresholdVisuals();
       return;
@@ -1328,25 +1435,22 @@
       if (isNewReading) lowReadingCount += 1;
 
       if (lowReadingCount < required) {
-        // Not confirmed yet: amber warning only, no sound.
+        // Below threshold but not confirmed: steady red, no sound.
         stopAlarmLoop();
-        lcdBox.classList.remove('alarm-state');
-        rangeFill.classList.remove('low');
-        liveDot.classList.remove('alarm');
-        lcdBox.classList.add('warning-state');
-        rangeFill.classList.add('warning');
-        liveDot.classList.add('warning');
-        alarmBanner.classList.remove('active');
+        lcdBox.classList.add('alarm-state', 'pending');
+        rangeFill.classList.add('low');
+        liveDot.classList.add('alarm-pending');
         readingState.textContent = `Below threshold — confirming ${lowReadingCount}/${required}`;
-        readingState.style.color = '#d97706';
+        readingState.style.color = '#b91c1c';
         readingState.style.fontWeight = '700';
-        setStatus(`Low current ${currentValue} mA — waiting for confirmation (${lowReadingCount}/${required})`, false, true);
+        setStatus(`Low current ${currentValue} mA — waiting for confirmation (${lowReadingCount}/${required})`, 'alarm');
         updateThresholdVisuals();
         return;
       }
 
-      lcdBox.classList.add('alarm-state');
-      rangeFill.classList.add('low');
+      // Confirmed: flashing red, banner and sound.
+      lcdBox.classList.add('alarm-state', 'confirmed');
+      rangeFill.classList.add('low', 'flash');
       liveDot.classList.add('alarm');
       alarmBanner.classList.add('active');
       alarmBannerMsg.textContent = `LOW BEAM CURRENT: ${currentValue} mA (threshold: ${threshold} mA)`;
@@ -1366,10 +1470,6 @@
       lowReadingCount = 0;
       alarmMutedForCurrentDrop = false;
       stopAlarmLoop();
-      lcdBox.classList.remove('alarm-state');
-      rangeFill.classList.remove('low');
-      liveDot.classList.remove('alarm');
-      alarmBanner.classList.remove('active');
       readingState.textContent = currentValue <= 300 ? 'Within expected range' : 'Out of range';
       readingState.style.color = '';
       readingState.style.fontWeight = '';
@@ -1377,22 +1477,32 @@
     }
   }
 
-  function setSourceWarning(message) {
+  function setSourceWarning(message, detail = 'Source unavailable — alarm not triggered') {
     sourceWarning = true;
     lowReadingCount = 0;
     stopAlarmLoop();
-    lcdBox.classList.remove('alarm-state');
-    rangeFill.classList.remove('low');
-    liveDot.classList.remove('alarm');
+    clearAlarmVisuals();
     lcdBox.classList.add('warning-state');
     rangeFill.classList.add('warning');
     liveDot.classList.add('warning');
-    alarmBanner.classList.remove('active');
-    readingState.textContent = 'Source unavailable — alarm not triggered';
+    readingState.textContent = detail;
     readingState.style.color = '#d97706';
     readingState.style.fontWeight = '700';
     connectionLabel.textContent = 'Source warning';
-    setStatus('Reading failed: ' + message, false, true);
+    setStatus('Reading failed: ' + message, 'warn');
+    updateThresholdVisuals();
+  }
+
+  function setReadError(message) {
+    sourceWarning = false;
+    lowReadingCount = 0;
+    stopAlarmLoop();
+    clearAlarmVisuals();
+    readingState.textContent = 'Reading failed — alarm not triggered';
+    readingState.style.color = '';
+    readingState.style.fontWeight = '700';
+    connectionLabel.textContent = stopped ? 'Stopped' : 'Monitoring';
+    setStatus('Reading failed: ' + message, 'normal');
     updateThresholdVisuals();
   }
 
@@ -1456,12 +1566,32 @@
     log('Alarm silenced by operator until current rises above threshold.');
   });
 
+  function openSettings() {
+    settingsModal.hidden = false;
+    settingsToggle.setAttribute('aria-expanded', 'true');
+    settingsClose.focus();
+  }
+
+  function closeSettings() {
+    settingsModal.hidden = true;
+    settingsToggle.setAttribute('aria-expanded', 'false');
+    settingsToggle.focus();
+  }
+
   settingsToggle.addEventListener('click', () => {
-    const willOpen = settingsPanel.hidden;
-    settingsPanel.hidden = !willOpen;
-    settingsToggle.setAttribute('aria-expanded', String(willOpen));
-    settingsToggle.textContent = willOpen ? 'Hide settings' : 'Alarm settings';
-    if (willOpen) ensureAudioContext();
+    if (settingsModal.hidden) openSettings();
+    else closeSettings();
+  });
+
+  settingsClose.addEventListener('click', closeSettings);
+  settingsDone.addEventListener('click', closeSettings);
+
+  settingsModal.addEventListener('click', event => {
+    if (event.target === settingsModal) closeSettings();
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !settingsModal.hidden) closeSettings();
   });
 
   soundModeRadios.forEach(radio => {
@@ -1491,9 +1621,14 @@
     console.debug(message);
   }
 
-  function setStatus(message, good = false, warn = false) {
+  function setStatus(message, tone = 'normal') {
     statusEl.textContent = message;
-    statusEl.style.color = good ? '#15803d' : warn ? '#d97706' : '#1e293b';
+    const tones = { good: '#15803d', alarm: '#b91c1c', warn: '#d97706', normal: '#1e293b' };
+    statusEl.style.color = tones[tone] || tones.normal;
+  }
+
+  function appError(code, message) {
+    return Object.assign(new Error(message), { code });
   }
 
   function cacheBust(url) {
@@ -1504,7 +1639,7 @@
 
   async function getWorker() {
     if (worker) return worker;
-    if (!window.Tesseract) throw new Error('Could not load the OCR engine. Check your internet connection.');
+    if (!window.Tesseract) throw appError('ENGINE', 'Could not load the OCR engine. Check your internet connection.');
     setStatus('Loading OCR engine…');
     worker = await Tesseract.createWorker('eng');
     await worker.setParameters({
@@ -1542,17 +1677,17 @@
       const image = new Image();
       image.crossOrigin = 'anonymous';
       image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error('Could not load image (CORS or invalid image URL): ' + url));
+      image.onerror = () => reject(appError('IMAGE_LOAD', 'Could not load image (CORS or invalid image URL): ' + url));
       image.src = cacheBust(url);
     });
   }
 
   async function locateImageUrls() {
     const response = await fetch(cacheBust(PAGE_URL), { cache: 'no-store', credentials: 'omit' });
-    if (!response.ok) throw new Error('Page returned HTTP ' + response.status);
+    if (!response.ok) throw appError('IMAGE_LOAD', 'Page returned HTTP ' + response.status);
     const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
     const urls = collectImageUrls(doc, PAGE_URL);
-    if (!urls.length) throw new Error('No image element found in the page HTML. The image may be generated dynamically by JavaScript.');
+    if (!urls.length) throw appError('IMAGE_LOAD', 'No image element found in the page HTML. The image may be generated dynamically by JavaScript.');
     log('Found ' + urls.length + ' image candidate(s).');
     return urls;
   }
@@ -1612,7 +1747,7 @@
 
   async function analyzeImage(url) {
     const image = await loadImage(url);
-    if (image.naturalWidth < 100 || image.naturalHeight < 50) throw new Error('Image is too small: ' + image.naturalWidth + '×' + image.naturalHeight);
+    if (image.naturalWidth < 100 || image.naturalHeight < 50) throw appError('IMAGE_LOAD', 'Image is too small: ' + image.naturalWidth + '×' + image.naturalHeight);
     const canvas = document.createElement('canvas');
     canvas.width = image.naturalWidth;
     canvas.height = image.naturalHeight;
@@ -1632,7 +1767,7 @@
     const words = (result.data.words || []).filter(w => w.text && w.bbox);
     const reading = selectCurrentReading(words);
     log('OCR text: ' + (result.data.text || '').replace(/\s+/g, ' ').slice(0, 500));
-    if (!reading) throw new Error('Could not identify a current value between 0 and 300 mA.');
+    if (!reading) throw appError('NO_VALUE', 'Could not identify a current value between 0 and 300 mA.');
 
     const numericVal = Number(reading.number.toFixed(2));
     const display = numericVal.toString();
@@ -1642,7 +1777,7 @@
     valueEl.dataset.value = display;
     rangeFill.style.width = Math.min(100, (numericVal / 300 * 100)) + '%';
     lastEl.textContent = 'Last successful reading: ' + new Date().toLocaleString();
-    setStatus('Current detected: ' + display + ' mA · ' + reading.method, true);
+    setStatus('Current detected: ' + display + ' mA · ' + reading.method, 'good');
     log('Selected current: ' + display + ' mA (' + reading.method + ', OCR confidence ' + Math.round(reading.confidence || 0) + '%).');
 
     evaluateAlarm(numericVal, true, true);
@@ -1665,9 +1800,15 @@
           log('Could not analyze ' + url + ': ' + error.message);
         }
       }
-      if (!success) throw lastError || new Error('Could not analyze any image.');
+      if (!success) throw lastError || appError('IMAGE_LOAD', 'Could not analyze any image.');
     } catch (error) {
-      setSourceWarning(error.message);
+      if (error.code === 'IMAGE_LOAD') {
+        setSourceWarning(error.message, 'Image unavailable — alarm not triggered');
+      } else if (error.code === 'NO_VALUE') {
+        setSourceWarning(error.message, 'No valid reading in image — alarm not triggered');
+      } else {
+        setReadError(error.message);
+      }
       log('ERROR: ' + error.message);
     } finally {
       busy = false;
@@ -1681,9 +1822,7 @@
     startButton.disabled = true;
     stopButton.disabled = false;
     liveDot.classList.add('live');
-    lcdBox.classList.remove('warning-state');
-    rangeFill.classList.remove('warning');
-    liveDot.classList.remove('warning');
+    clearAlarmVisuals();
     connectionLabel.textContent = 'Monitoring';
     log('Monitoring started. Refresh interval: 30 seconds.');
     cycle();
@@ -1698,13 +1837,9 @@
     startButton.disabled = false;
     stopButton.disabled = true;
     liveDot.classList.remove('live');
-    liveDot.classList.remove('alarm');
-    liveDot.classList.remove('warning');
-    lcdBox.classList.remove('warning-state');
-    rangeFill.classList.remove('warning');
+    clearAlarmVisuals();
     sourceWarning = false;
     lowReadingCount = 0;
-    alarmBanner.classList.remove('active');
     readingState.textContent = 'Waiting for data';
     readingState.style.color = '';
     readingState.style.fontWeight = '';
