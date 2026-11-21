@@ -1675,51 +1675,48 @@
     emptyPreview.hidden = true;
   }
 
-  // Select the numeric OCR word nearest to the CURRENT label, preferring a value
-  // between 0 and 300 and a large, clearly printed word.
+  // Select the numeric OCR word next to the CURRENT label. A word is only
+  // accepted when it is reliable and sits in the value area; if the white
+  // machine values are missing we report NO_VALUE instead of guessing a number
+  // from elsewhere in the image.
   function selectCurrentReading(words) {
+    const MIN_CONFIDENCE = 60;
     const clean = s => (s || '').replace(/[^a-z]/gi, '').toUpperCase();
     const currentWords = words.filter(w => clean(w.text) === 'CURRENT' || clean(w.text).includes('CURRENT'));
     const numericWords = words.map(w => {
+      if ((w.confidence || 0) < MIN_CONFIDENCE) return null;
       const raw = (w.text || '').replace(',', '.').replace(/[^\d.]/g, '');
       if (!raw || !/^\d+(?:\.\d+)?$/.test(raw)) return null;
       const number = Number(raw);
       if (!Number.isFinite(number) || number < 0 || number > 300) return null;
       return { ...w, number, raw };
     }).filter(Boolean);
-    if (!numericWords.length) return null;
+    if (!numericWords.length || !currentWords.length) return null;
 
-    if (currentWords.length) {
-      const candidates = [];
-      for (const label of currentWords) {
-        const lx = (label.bbox.x0 + label.bbox.x1) / 2;
-        const ly = (label.bbox.y0 + label.bbox.y1) / 2;
-        const labelHeight = Math.max(1, label.bbox.y1 - label.bbox.y0);
-        for (const n of numericWords) {
-          const nx = (n.bbox.x0 + n.bbox.x1) / 2;
-          const ny = (n.bbox.y0 + n.bbox.y1) / 2;
-          const dx = Math.abs(nx - lx), dy = Math.abs(ny - ly);
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          const height = Math.max(1, n.bbox.y1 - n.bbox.y0);
-          // Prefer values below or to the right of CURRENT, and larger glyphs.
-          const directionPenalty = (ny < ly - labelHeight * 0.35 ? 1.7 : 0) + (nx < lx - labelHeight ? 0.7 : 0);
-          const sizeBonus = Math.min(2, height / labelHeight);
-          candidates.push({ word: n, score: distance + directionPenalty * labelHeight - sizeBonus * labelHeight * 2 });
-        }
-      }
-      candidates.sort((a, b) => a.score - b.score);
-      if (candidates.length && candidates[0].score < 18 * Math.max(1, currentWords[0].bbox.y1 - currentWords[0].bbox.y0)) {
-        return { value: candidates[0].word.raw, number: candidates[0].word.number, confidence: candidates[0].word.confidence, method: 'near CURRENT label' };
+    const candidates = [];
+    for (const label of currentWords) {
+      const lx = (label.bbox.x0 + label.bbox.x1) / 2;
+      const ly = (label.bbox.y0 + label.bbox.y1) / 2;
+      const labelHeight = Math.max(1, label.bbox.y1 - label.bbox.y0);
+      for (const n of numericWords) {
+        const nx = (n.bbox.x0 + n.bbox.x1) / 2;
+        const ny = (n.bbox.y0 + n.bbox.y1) / 2;
+        // The value is printed below or to the right of CURRENT. Ignore numbers
+        // from other areas of the image, which caused false low readings.
+        if (ny < ly - labelHeight * 0.35 || nx < lx - labelHeight) continue;
+        const distance = Math.sqrt((nx - lx) ** 2 + (ny - ly) ** 2);
+        const height = Math.max(1, n.bbox.y1 - n.bbox.y0);
+        const sizeBonus = Math.min(2, height / labelHeight);
+        const confidenceBonus = (n.confidence / 100) * labelHeight * 1.5;
+        candidates.push({ word: n, score: distance - sizeBonus * labelHeight * 2 - confidenceBonus });
       }
     }
-
-    // Fallback: choose the largest OCR number in the expected 0–300 mA range.
-    numericWords.sort((a, b) => {
-      const ah = (a.bbox.y1 - a.bbox.y0), bh = (b.bbox.y1 - b.bbox.y0);
-      return bh - ah;
-    });
-    const best = numericWords[0];
-    return { value: best.raw, number: best.number, confidence: best.confidence, method: 'largest 0–300 number (CURRENT label not detected)' };
+    candidates.sort((a, b) => a.score - b.score);
+    const labelHeight = Math.max(1, currentWords[0].bbox.y1 - currentWords[0].bbox.y0);
+    if (candidates.length && candidates[0].score < 18 * labelHeight) {
+      return { value: candidates[0].word.raw, number: candidates[0].word.number, confidence: candidates[0].word.confidence, method: 'near CURRENT label' };
+    }
+    return null;
   }
 
   async function analyzeImage(url) {
@@ -1744,7 +1741,7 @@
     const words = (result.data.words || []).filter(w => w.text && w.bbox);
     const reading = selectCurrentReading(words);
     log('OCR text: ' + (result.data.text || '').replace(/\s+/g, ' ').slice(0, 500));
-    if (!reading) throw appError('NO_VALUE', 'Could not identify a current value between 0 and 300 mA.');
+    if (!reading) throw appError('NO_VALUE', 'No reliable current value next to the CURRENT label (value missing or low OCR confidence).');
 
     const numericVal = Number(reading.number.toFixed(2));
     const display = numericVal.toString();

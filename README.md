@@ -10,6 +10,7 @@ A lightweight browser dashboard that polls the ALBA Synchrotron public machine-s
 - The gear icon opens a closable pop-up for alarm settings: by default the sound plays a fixed 3 cycles; it can also repeat until silenced or use 1–10 cycles, where each cycle is exactly three beeps.
 - Temporal hysteresis: require 1, 2, or 3 consecutive low readings before sounding the alarm. While unconfirmed, the readout is steady red; once confirmed it flashes red and the alarm sounds.
 - Silencing the alarm (or finishing the fixed-cycle mode) stops the sound and the flashing, but keeps the red low-current state until the reading recovers.
+- A reading is only accepted when it is a reliable OCR word (confidence ≥ 60 %) located next to the CURRENT label. When the machine's white numeric values disappear from the image, the old fallback that guessed a number from elsewhere was removed, so it becomes a `NO_VALUE` warning instead of a false low reading. Values such as `0` or `0.0` remain valid.
 - The image preview keeps the source 16:9 aspect ratio. Amber is reserved for failures to load the image or when a loaded image contains no valid reading; in those cases the alarm does not sound.
 - Alarm settings persist in `localStorage`.
 
