@@ -1145,10 +1145,10 @@
       <div class="modal-body">
         <fieldset class="setting-group">
           <legend>Alarm sound</legend>
-          <label><input type="radio" name="alarm-sound-mode" value="continuous" checked> Repeat until silenced</label>
+          <label><input type="radio" name="alarm-sound-mode" value="continuous"> Repeat until silenced</label>
           <div class="cycles-setting">
-            <label><input type="radio" name="alarm-sound-mode" value="limited"> Fixed number of cycles</label>
-            <input type="number" id="alarm-cycles" min="1" max="10" step="1" value="2" inputmode="numeric" disabled>
+            <label><input type="radio" name="alarm-sound-mode" value="limited" checked> Fixed number of cycles</label>
+            <input type="number" id="alarm-cycles" min="1" max="10" step="1" value="3" inputmode="numeric">
           </div>
         </fieldset>
         <fieldset class="setting-group">
@@ -1174,6 +1174,7 @@
   const STORAGE_KEY_SOUND_MODE = 'alba_current_alarm_sound_mode';
   const STORAGE_KEY_ALARM_CYCLES = 'alba_current_alarm_cycles';
   const STORAGE_KEY_CONFIRM_READINGS = 'alba_current_alarm_confirm_readings';
+  const STORAGE_KEY_SETTINGS_VERSION = 'alba_current_settings_version';
 
   const valueEl = document.getElementById('current-mA');
   const statusEl = document.getElementById('status');
@@ -1213,6 +1214,12 @@
   let sourceWarning = false;
 
   try {
+    // Apply the new sound defaults once, even for visitors with older saved preferences.
+    if (localStorage.getItem(STORAGE_KEY_SETTINGS_VERSION) !== '2') {
+      localStorage.removeItem(STORAGE_KEY_SOUND_MODE);
+      localStorage.removeItem(STORAGE_KEY_ALARM_CYCLES);
+      localStorage.setItem(STORAGE_KEY_SETTINGS_VERSION, '2');
+    }
     const savedThreshold = localStorage.getItem(STORAGE_KEY_THRESHOLD);
     if (savedThreshold !== null && !Number.isNaN(Number(savedThreshold))) {
       const clamped = Math.max(0, Math.min(300, Number(savedThreshold)));
